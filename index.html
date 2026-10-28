@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Azai Academy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Onest:wght@400;500;600&display=swap">
+<style>
+/* Layout: mobile-first app shell. Top bar + slide-in drawer + bottom tabs; drawer becomes a fixed sidebar from 900px. */
+:root{
+  --bg:#fbf7f7; --surface:#ffffff; --surface2:#f6eff0; --line:#ecdfe1;
+  --fg:#241618; --muted:#7d6a6d; --accent:#c8102e; --accent-ink:#ffffff; --accent-soft:#fdecee;
+  --ok:#1f8a4c; --ok-soft:#e5f5ec; --warn:#b45309; --warn-soft:#fdf1dc; --bad:#b4151f; --bad-soft:#fde8ea; --info:#1d5fa8; --info-soft:#e6f0fb;
+  --shadow:0 1px 2px rgba(60,10,20,.05);
+  --f-display:'Bricolage Grotesque','Onest',system-ui,sans-serif; --f-body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#150e0f; --surface:#1e1416; --surface2:#271b1e; --line:#37262a;
+  --fg:#f6ecee; --muted:#b09ba0; --accent:#ff5468; --accent-ink:#2a0509; --accent-soft:#3a1519;
+  --ok:#5fd08c; --ok-soft:#14301f; --warn:#f0b35a; --warn-soft:#352610; --bad:#ff8a93; --bad-soft:#3d1519; --info:#7db4f2; --info-soft:#13263d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#150e0f; --surface:#1e1416; --surface2:#271b1e; --line:#37262a;
+  --fg:#f6ecee; --muted:#b09ba0; --accent:#ff5468; --accent-ink:#2a0509; --accent-soft:#3a1519;
+  --ok:#5fd08c; --ok-soft:#14301f; --warn:#f0b35a; --warn-soft:#352610; --bad:#ff8a93; --bad-soft:#3d1519; --info:#7db4f2; --info-soft:#13263d; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:26px;line-height:1.15} h2{font-size:17px} h3{font-size:15px}
+p{margin:0}
+.muted{color:var(--muted)} .sm{font-size:12px} .eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--accent)}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* login */
+.login{min-height:100%;display:flex;flex-direction:column;background:var(--bg)}
+.login-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);background:linear-gradient(100deg,var(--surface) 55%,var(--accent-soft))}
+.login-body{flex:1;display:flex;align-items:center;justify-content:center;padding:32px max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px))}
+.login-card{width:100%;max-width:380px;display:grid;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:38px;height:38px;border-radius:10px;background:#fff;border:1px solid var(--line);color:#e11d3a;display:grid;place-items:center;flex:none}
+.logo svg{width:28px;height:28px}
+.brand b{font-family:var(--f-display);font-size:16px;display:block;line-height:1.1}
+.brand span{font-size:11px;color:var(--muted)}
+label{display:grid;gap:5px;font-size:12px;font-weight:500}
+input[type=text],input[type=password],select,textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:10px 12px;min-height:42px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 14px;min-height:40px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:disabled{opacity:.45;cursor:not-allowed}
+.btn.block{width:100%}
+.btn svg,.ico{width:16px;height:16px;flex:none}
+.demo{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px}
+.demo-row{display:flex;gap:8px;flex-wrap:wrap}
+.err{color:var(--bad);font-size:12px}
+
+/* shell */
+.app{min-height:100%;display:flex}
+.side{position:fixed;inset:0 auto 0 0;width:min(280px,84vw);background:var(--surface);border-right:1px solid var(--line);z-index:30;transform:translateX(-102%);transition:transform .2s ease;display:flex;flex-direction:column;padding:14px 12px calc(14px + env(safe-area-inset-bottom,0px));padding-left:max(12px,env(safe-area-inset-left,0px));overflow-y:auto}
+.side.open{transform:none}
+.scrim{position:fixed;inset:0;background:rgba(20,5,8,.45);z-index:25}
+.side-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 4px 12px}
+.who{display:flex;gap:10px;align-items:center;background:var(--surface2);border-radius:11px;padding:10px;margin-bottom:14px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+.grp{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:12px 8px 5px}
+.nav-a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:var(--fg);text-decoration:none;font-weight:500}
+.nav-a:hover{background:var(--surface2)}
+.nav-a.on{background:var(--accent-soft);color:var(--accent)}
+.side-foot{margin-top:auto;display:grid;gap:8px;padding-top:16px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--surface)}
+.icon-btn{border:0;background:transparent;width:36px;height:36px;border-radius:9px;display:grid;place-items:center;color:var(--muted)}
+.icon-btn:hover{background:var(--surface2)}
+.pill-user{margin:0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:11px;padding:3px 12px 3px 5px;background:var(--surface);min-width:0}
+.pill-user div{min-width:0;line-height:1.2}
+.pill-user b{font-weight:500;font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:4px 8px;font-size:11px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--surface2);color:var(--fg)}
+.page{width:100%;max-width:820px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-right,0px)) 96px max(16px,env(safe-area-inset-left,0px));display:grid;gap:18px;align-content:start}
+.bottom{position:fixed;inset:auto 0 0 0;z-index:20;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:0 max(0px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(0px,env(safe-area-inset-left,0px))}
+.bottom a{display:grid;justify-items:center;gap:2px;padding:9px 4px 8px;font-size:11px;color:var(--muted);text-decoration:none;border-top:2px solid transparent}
+.bottom a.on{color:var(--accent);border-top-color:var(--accent)}
+@media (min-width:900px){
+  .side{transform:none;position:fixed;width:260px}
+  .main{margin-left:260px}
+  .menu-btn,.scrim{display:none}
+  .bottom{display:none}
+  .page{padding-bottom:48px}
+  .top{padding-left:24px}
+}
+
+/* content blocks */
+.head{display:grid;gap:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.card.pad{padding:16px}
+.sect{display:grid;gap:8px}
+.sect-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.link{color:var(--accent);font-weight:600;text-decoration:none;font-size:13px;background:none;border:0;padding:0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr)}
+.stats>div{padding:12px 14px;border-left:1px solid var(--line);min-width:0}
+.stats>div:first-child{border-left:0}
+.stats small{display:block;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stats b{font-family:var(--f-display);font-size:24px;font-variant-numeric:tabular-nums}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}.stats>div:nth-child(3){border-left:0}.stats>div:nth-child(n+3){border-top:1px solid var(--line)}}
+.list>*+*{border-top:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;min-width:0}
+.row .grow{flex:1;min-width:0}
+.row .t{font-weight:500;overflow-wrap:anywhere}
+.row .meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-top:3px;font-size:12px;color:var(--muted)}
+.chk{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);background:var(--surface);flex:none;display:grid;place-items:center;padding:0;color:transparent}
+.chk.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chk svg{width:13px;height:13px}
+.done .t{text-decoration:line-through;color:var(--muted)}
+.tag{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:1px 9px;font-size:11.5px;font-weight:500;background:var(--surface2);white-space:nowrap}
+.tag i{width:7px;height:7px;border-radius:50%;background:currentColor;display:block}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:2px 10px;font-size:11.5px;font-weight:500;white-space:nowrap;flex:none}
+.b-bad{background:var(--bad-soft);color:var(--bad)} .b-warn{background:var(--warn-soft);color:var(--warn)} .b-info{background:var(--info-soft);color:var(--info)} .b-ok{background:var(--ok-soft);color:var(--ok)} .b-mute{background:var(--surface2);color:var(--muted)} .b-acc{background:var(--accent-soft);color:var(--accent)}
+.lesson{display:flex;gap:14px;padding:11px 14px;align-items:center}
+.lesson .tm{width:46px;flex:none;font-variant-numeric:tabular-nums;line-height:1.25}
+.lesson .tm b{display:block;font-weight:600}
+.lesson .info{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px;line-height:1.35}
+.lesson .subj{font-weight:500;overflow-wrap:anywhere}
+.lesson .room{display:flex;align-items:center;gap:6px;min-width:0;line-height:1.35}
+.lesson .room svg{flex:none}
+.lesson .room span{min-width:0;overflow-wrap:anywhere}
+.avatar img,.avatar-btn img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.avatar-btn{overflow:hidden;padding:0}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.notice{padding:13px 14px;display:flex;gap:12px;align-items:flex-start}
+.notice .ni{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;background:var(--accent-soft);color:var(--accent)}
+.days{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.day{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 0;text-align:center;display:grid;gap:1px;font-size:11px;color:var(--muted)}
+.day b{font-size:17px;color:var(--fg);font-family:var(--f-display)}
+.day.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)} .day.on b{color:var(--accent)}
+.day.today::after{content:"";width:4px;height:4px;border-radius:50%;background:var(--accent);margin:1px auto 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 13px;font-size:12.5px;font-weight:500}
+.chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.opt{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 12px;text-align:left;display:flex;gap:10px;align-items:center;width:100%}
+.opt .n{width:20px;height:20px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:10px;color:var(--muted);flex:none}
+.opt.right{background:var(--ok-soft);border-color:var(--ok)} .opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.opt:disabled{cursor:default}
+.bar{height:6px;border-radius:9px;background:var(--surface2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:9px;transition:width .3s}
+.tabs{display:inline-flex;flex-wrap:wrap;gap:2px;background:var(--surface2);border-radius:10px;padding:3px}
+.tabs button{border:0;background:transparent;border-radius:8px;padding:6px 11px;font-size:12.5px;font-weight:500;color:var(--muted)}
+.tabs button.on{background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+.tabs button span{font-size:10.5px;color:var(--accent);margin-left:4px}
+.empty{border:1px dashed var(--line);border-radius:12px;padding:34px 16px;text-align:center;display:grid;gap:5px;justify-items:center;color:var(--muted)}
+.empty b{color:var(--fg);font-weight:600}
+.empty .eic{width:34px;height:34px;border-radius:50%;background:var(--surface);display:grid;place-items:center;color:var(--muted);margin-bottom:4px}
+.form{display:grid;gap:14px;padding:16px}
+.ask-box{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px}
+.ask-box input{border:0;outline:0;background:transparent;flex:1;min-width:0;padding:8px 0;min-height:36px}
+.ask-box:focus-within{border-color:var(--accent)}
+.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media (max-width:600px){.quick{grid-template-columns:1fr}}
+.quick button{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface)}
+.answer{padding:16px;display:grid;gap:8px}
+.answer p+p{margin-top:6px}
+.src{display:flex;gap:6px;flex-wrap:wrap}
+.drop{display:grid;justify-items:center;gap:8px;padding:30px 16px;text-align:center;border:1px dashed var(--line);border-radius:12px;background:var(--surface)}
+.preview{display:grid;gap:12px;padding:16px}
+.preview img{max-height:240px;border-radius:10px;object-fit:contain;background:var(--surface2);width:100%}
+.steps{display:grid;gap:10px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{display:flex;gap:10px;counter-increment:s}
+.steps li::before{content:counter(s);width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:700;display:grid;place-items:center;flex:none;margin-top:1px}
+.plan .blk{display:flex;gap:12px;padding:11px 14px;align-items:center}
+.plan .st{width:44px;font-variant-numeric:tabular-nums;font-weight:600;flex:none}
+.plan .brk{background:var(--surface2);color:var(--muted);font-size:12px}
+.score{font-family:var(--f-display);font-size:42px;color:var(--accent);line-height:1}
+.mode{display:grid;gap:2px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;width:100%}
+.mode.on{border-color:var(--accent);background:var(--accent-soft)}
+.mode b{font-weight:600} .mode span{font-size:12px;color:var(--muted)}
+.bubble{padding:12px 14px;border-radius:12px;max-width:92%;overflow-wrap:anywhere}
+.bubble.me{background:var(--accent);color:var(--accent-ink);margin-left:auto}
+.bubble.ai{background:var(--surface);border:1px solid var(--line)}
+.chat{display:grid;gap:10px}
+.cols2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media (max-width:560px){.cols2{grid-template-columns:1fr}}
+.hint{padding:10px 12px;background:var(--surface2);border-radius:9px;font-size:13px;display:flex;gap:8px;align-items:center}
+.note{font-size:11.5px;color:var(--muted)}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* responsive extras */
+html{-webkit-text-size-adjust:100%}
+body{overflow-x:hidden}
+img,svg,video{max-width:100%}
+@media (max-width:600px){input[type=text],input[type=password],select,textarea,.ask-box input{font-size:16px}.page{padding-top:16px}h1{font-size:22px}}
+@media (min-width:900px){.login-card{max-width:420px}.top{padding-right:24px}}
+@media (min-width:1280px){.page{max-width:980px}}
+/* fixes */
+#root{min-height:100vh;min-height:100dvh}
+.login,.app{min-height:100vh;min-height:100dvh}
+.brand .logo,.logo{color:#e11d3a;font-size:inherit}
+.brand .logo svg{color:#e11d3a}
+.head{gap:8px}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;line-height:1.3}
+.eyebrow .ico{width:15px;height:15px}
+.head h1{margin-top:2px}
+/* top bar + account popover */
+.top{gap:8px}
+.top-act{display:flex;align-items:center;gap:2px;flex:none}
+.pill-user{margin:0 auto;flex:0 1 auto;min-width:0;max-width:240px}
+.pill-user .role{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.ico.xs{width:11px;height:11px}
+.avatar-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:700;display:grid;place-items:center;padding:0;margin-left:4px;flex:none}
+.avatar-btn[aria-expanded="true"]{box-shadow:0 0 0 3px var(--accent-soft);border-color:var(--accent)}
+.avatar.big{width:40px;height:40px;font-size:13px}
+.acct-pop{position:absolute;top:calc(100% + 8px);right:max(12px,env(safe-area-inset-right,0px));width:min(300px,calc(100vw - 24px));background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px -12px rgba(40,5,12,.35);padding:14px;display:grid;gap:12px;z-index:35;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);transform-origin:top right;transition:opacity .2s var(--ease),transform .25s var(--ease),visibility .2s}
+.acct-pop.open{opacity:1;visibility:visible;transform:none}
+.acct-who{display:flex;gap:12px;align-items:center;min-width:0}
+.acct-who b{font-weight:600;display:block;overflow-wrap:anywhere}
+.acct-note{background:var(--surface2);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--muted);line-height:1.45}
+@media (max-width:600px){
+ .top{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));gap:6px}
+ .icon-btn{width:32px;height:32px}
+ .pill-user{padding:3px 10px 3px 4px;gap:6px}
+ .pill-user .avatar{width:24px;height:24px;font-size:9px}
+ .pill-user b{font-size:11.5px}
+ .top .seg button{padding:4px 6px}
+}
+@media (max-width:420px){.top .bell{display:none}.pill-user .avatar{display:none}.pill-user{padding:3px 10px}}
+@media (max-width:360px){.top .seg{display:none}}
+@media (min-width:900px){.acct-pop{right:24px}}
+.enter .top .icon-btn:last-child svg{animation:none}
+.enter .top .bell svg{transform-origin:50% 12%;animation:ring 1.2s .9s ease-in-out backwards}
+/* left/right corner alignment: hamburger glyph and avatar line up with page content (16px) */
+@media (max-width:899px){.top{padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
+@media (max-width:600px){.top{padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
+.top .menu-btn.icon-btn{color:var(--fg);flex:none}
+.top .logo.menu-btn{flex:none;margin-left:2px}
+.acct-pop{right:max(16px,env(safe-area-inset-right,0px))}
+@media (min-width:900px){.top{padding-left:24px;padding-right:24px}.acct-pop{right:24px}}
+/* bottom nav adapts to 3 or 4 tabs */
+.bottom{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:1fr}
+.bottom a{min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t,.lesson b,.head h1{hyphens:manual}
+/* ===== Animations ===== */
+:root{--ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.34,1.56,.64,1)}
+html{-webkit-tap-highlight-color:transparent}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes dropIn{from{opacity:0;transform:translateY(-100%)}}
+@keyframes upIn{from{opacity:0;transform:translateY(100%)}}
+@keyframes slideR{from{opacity:0;transform:translateX(-16px)}}
+@keyframes pop{0%{transform:scale(.5);opacity:.3}55%{transform:scale(1.18);opacity:1}100%{transform:scale(1)}}
+@keyframes shake{20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
+@keyframes barIn{from{width:0}}
+@keyframes draw{from{stroke-dashoffset:30}}
+@keyframes growY{from{transform:scaleY(0)}}
+@keyframes inR{from{opacity:0;transform:translateX(20px) scale(.94)}}
+@keyframes inL{from{opacity:0;transform:translateX(-20px) scale(.94)}}
+@keyframes ring{0%,100%{transform:rotate(0)}15%{transform:rotate(16deg)}30%{transform:rotate(-14deg)}45%{transform:rotate(10deg)}60%{transform:rotate(-6deg)}75%{transform:rotate(3deg)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}70%,100%{box-shadow:0 0 0 7px transparent}}
+@keyframes float{50%{transform:translateY(-5px)}}
+@keyframes drift1{to{transform:translate(-60px,70px) scale(1.15)}}
+@keyframes drift2{to{transform:translate(80px,-60px) scale(1.2)}}
+
+/* page entrance (only on route change, login, logout) */
+.enter .top{animation:dropIn .6s var(--ease) backwards}
+.enter .bottom{animation:upIn .6s .15s var(--ease) backwards}
+.enter .side>*{animation:slideR .6s var(--ease) backwards}
+.enter .side>:nth-child(1){animation-delay:0.10s}
+.enter .side>:nth-child(2){animation-delay:0.14s}
+.enter .side>:nth-child(3){animation-delay:0.18s}
+.enter .side>:nth-child(4){animation-delay:0.22s}
+.enter .side>:nth-child(5){animation-delay:0.26s}
+.enter .side>:nth-child(6){animation-delay:0.30s}
+.enter .side>:nth-child(7){animation-delay:0.34s}
+.enter .side>:nth-child(8){animation-delay:0.38s}
+.enter .side>:nth-child(9){animation-delay:0.42s}
+.enter .side>:nth-child(10){animation-delay:0.46s}
+.enter .side>:nth-child(11){animation-delay:0.50s}
+.enter .side>:nth-child(12){animation-delay:0.54s}
+.enter .side>:nth-child(13){animation-delay:0.58s}
+.enter .side>:nth-child(14){animation-delay:0.62s}
+.enter .side>:nth-child(15){animation-delay:0.66s}
+.enter .side>:nth-child(16){animation-delay:0.70s}
+.enter .side>:nth-child(17){animation-delay:0.74s}
+.enter .page>.head>*{animation:rise .7s var(--ease) backwards}
+.enter .page>.head>:nth-child(1){animation-delay:.04s}
+.enter .page>.head>:nth-child(2){animation-delay:.1s}
+.enter .page>.head>:nth-child(3){animation-delay:.17s}
+.enter .page>*:not(.head){animation:rise .7s .6s var(--ease) backwards}
+.enter .page>*:not(.head):nth-child(2){animation-delay:0.14s}
+.enter .page>*:not(.head):nth-child(3){animation-delay:0.21s}
+.enter .page>*:not(.head):nth-child(4){animation-delay:0.28s}
+.enter .page>*:not(.head):nth-child(5){animation-delay:0.35s}
+.enter .page>*:not(.head):nth-child(6){animation-delay:0.42s}
+.enter .page>*:not(.head):nth-child(7){animation-delay:0.49s}
+.enter .page>*:not(.head):nth-child(8){animation-delay:0.56s}
+.enter .page>*:not(.head):nth-child(9){animation-delay:0.63s}
+.enter .page>*:not(.head):nth-child(10){animation-delay:0.70s}
+.enter .list>*,.enter .stats>div,.enter .days>*,.enter .quick>*,.enter .chips>*,.enter .steps li,.enter .tabs>*,.enter .demo-row>*{animation:fadeUp .55s .6s var(--ease) backwards}
+.enter .list>*:nth-child(1),.enter .stats>div:nth-child(1),.enter .days>*:nth-child(1),.enter .quick>*:nth-child(1),.enter .chips>*:nth-child(1),.enter .steps li:nth-child(1),.enter .tabs>*:nth-child(1),.enter .demo-row>*:nth-child(1){animation-delay:0.300s}
+.enter .list>*:nth-child(2),.enter .stats>div:nth-child(2),.enter .days>*:nth-child(2),.enter .quick>*:nth-child(2),.enter .chips>*:nth-child(2),.enter .steps li:nth-child(2),.enter .tabs>*:nth-child(2),.enter .demo-row>*:nth-child(2){animation-delay:0.345s}
+.enter .list>*:nth-child(3),.enter .stats>div:nth-child(3),.enter .days>*:nth-child(3),.enter .quick>*:nth-child(3),.enter .chips>*:nth-child(3),.enter .steps li:nth-child(3),.enter .tabs>*:nth-child(3),.enter .demo-row>*:nth-child(3){animation-delay:0.390s}
+.enter .list>*:nth-child(4),.enter .stats>div:nth-child(4),.enter .days>*:nth-child(4),.enter .quick>*:nth-child(4),.enter .chips>*:nth-child(4),.enter .steps li:nth-child(4),.enter .tabs>*:nth-child(4),.enter .demo-row>*:nth-child(4){animation-delay:0.435s}
+.enter .list>*:nth-child(5),.enter .stats>div:nth-child(5),.enter .days>*:nth-child(5),.enter .quick>*:nth-child(5),.enter .chips>*:nth-child(5),.enter .steps li:nth-child(5),.enter .tabs>*:nth-child(5),.enter .demo-row>*:nth-child(5){animation-delay:0.480s}
+.enter .list>*:nth-child(6),.enter .stats>div:nth-child(6),.enter .days>*:nth-child(6),.enter .quick>*:nth-child(6),.enter .chips>*:nth-child(6),.enter .steps li:nth-child(6),.enter .tabs>*:nth-child(6),.enter .demo-row>*:nth-child(6){animation-delay:0.525s}
+.enter .list>*:nth-child(7),.enter .stats>div:nth-child(7),.enter .days>*:nth-child(7),.enter .quick>*:nth-child(7),.enter .chips>*:nth-child(7),.enter .steps li:nth-child(7),.enter .tabs>*:nth-child(7),.enter .demo-row>*:nth-child(7){animation-delay:0.570s}
+.enter .list>*:nth-child(8),.enter .stats>div:nth-child(8),.enter .days>*:nth-child(8),.enter .quick>*:nth-child(8),.enter .chips>*:nth-child(8),.enter .steps li:nth-child(8),.enter .tabs>*:nth-child(8),.enter .demo-row>*:nth-child(8){animation-delay:0.615s}
+.enter .list>*:nth-child(9),.enter .stats>div:nth-child(9),.enter .days>*:nth-child(9),.enter .quick>*:nth-child(9),.enter .chips>*:nth-child(9),.enter .steps li:nth-child(9),.enter .tabs>*:nth-child(9),.enter .demo-row>*:nth-child(9){animation-delay:0.660s}
+.enter .list>*:nth-child(10),.enter .stats>div:nth-child(10),.enter .days>*:nth-child(10),.enter .quick>*:nth-child(10),.enter .chips>*:nth-child(10),.enter .steps li:nth-child(10),.enter .tabs>*:nth-child(10),.enter .demo-row>*:nth-child(10){animation-delay:0.705s}
+.enter .bar i{animation:barIn 1s .5s var(--ease) backwards}
+.enter .top .icon-btn:last-child svg{transform-origin:50% 12%;animation:ring 1.2s .9s ease-in-out backwards}
+.enter .nav-a.on::before{animation:growY .5s .5s var(--spring) backwards}
+.enter .login-head{animation:dropIn .6s var(--ease) backwards}
+.enter .login-card>*{animation:rise .7s var(--ease) backwards}
+.enter .login-card>:nth-child(1){animation-delay:0.12s}
+.enter .login-card>:nth-child(2){animation-delay:0.20s}
+.enter .login-card>:nth-child(3){animation-delay:0.28s}
+.enter .login-card>:nth-child(4){animation-delay:0.36s}
+.enter .login-card>:nth-child(5){animation-delay:0.44s}
+.enter .login .logo{animation:pop .8s .2s var(--spring) backwards}
+.page.leaving{opacity:0;transform:translateY(-8px);transition:opacity .14s ease,transform .14s ease}
+
+/* result of an action (applied once by JS) */
+.fx{animation:rise .55s var(--ease) backwards}
+.chk.fx{animation:pop .5s var(--spring) backwards}
+.chk.fx svg path{stroke-dasharray:30;animation:draw .4s .08s ease-out backwards}
+.opt.right.fx{animation:pop .5s var(--spring) backwards}
+.opt.wrong.fx,.err.fx,.login-card input.fx{animation:shake .45s ease backwards}
+.bubble.me.fx{animation:inR .5s var(--ease) backwards;transform-origin:100% 100%}
+.bubble.ai.fx{animation:inL .5s var(--ease) backwards;transform-origin:0 100%}
+.preview.fx .steps li{animation:fadeUp .5s var(--ease) backwards}
+.preview.fx .steps li:nth-child(1){animation-delay:.15s}.preview.fx .steps li:nth-child(2){animation-delay:.22s}.preview.fx .steps li:nth-child(3){animation-delay:.29s}.preview.fx .steps li:nth-child(4){animation-delay:.36s}.preview.fx .steps li:nth-child(5){animation-delay:.43s}
+
+/* interaction */
+.btn,.chip,.opt,.mode,.day,.quick button,.icon-btn,.tabs button,.seg button,.nav-a,.chk,.row,.lesson,.notice,.drop{transition:background-color .25s var(--ease),border-color .25s var(--ease),color .25s var(--ease),transform .3s var(--ease),box-shadow .3s var(--ease),filter .25s}
+.quick button svg,.bottom a svg{transition:transform .35s var(--spring)}
+.bottom a{transition:color .25s var(--ease)}
+.bottom a.on svg{transform:translateY(-1px) scale(1.1)}
+.bottom a:active svg{transform:scale(.8)}
+input,select,textarea{transition:border-color .25s var(--ease),box-shadow .3s var(--ease)}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px var(--accent-soft)}
+.ask-box{transition:border-color .25s var(--ease),box-shadow .3s var(--ease)}
+.ask-box:focus-within{box-shadow:0 0 0 4px var(--accent-soft)}
+.btn:active,.chip:active,.opt:not(:disabled):active,.mode:active,.day:active,.quick button:active,.icon-btn:active,.chk:active{transform:scale(.95)}
+@media (hover:hover){
+ .btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px -10px rgba(60,10,20,.45);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+ .btn.primary:hover{filter:brightness(1.08);box-shadow:0 12px 24px -10px var(--accent);border-color:var(--accent)}
+ .btn:disabled:hover{transform:none;filter:none;box-shadow:none}
+ .chip:hover,.opt:not(:disabled):hover,.mode:hover,.quick button:hover,.day:hover{border-color:var(--accent);transform:translateY(-1px)}
+ .quick button:hover svg{transform:translateX(4px)}
+ .row:hover,.lesson:hover,.notice:hover{background:var(--surface2)}
+ .nav-a:hover{transform:translateX(3px)}
+ .chk:hover{border-color:var(--accent)}
+ .drop:hover{border-color:var(--accent);background:var(--accent-soft)}
+}
+.list{overflow:hidden}
+.nav-a{position:relative}
+.nav-a.on::before{content:"";position:absolute;left:2px;top:22%;bottom:22%;width:3px;border-radius:3px;background:var(--accent)}
+.bar i{transition:width .8s var(--ease)}
+.day.today::after{animation:pulse 2s ease-out infinite}
+.empty .eic{animation:float 3.5s ease-in-out infinite}
+.drop svg{animation:float 3s ease-in-out infinite}
+.drop.over{border-color:var(--accent);background:var(--accent-soft);transform:scale(1.015)}
+
+/* drawer */
+.side{transition:transform .45s var(--ease),box-shadow .45s var(--ease)}
+.side.open{box-shadow:0 0 48px rgba(20,5,8,.3)}
+.scrim{opacity:0;pointer-events:none;transition:opacity .35s ease;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.scrim.show{opacity:1;pointer-events:auto}
+
+/* login backdrop */
+.login{position:relative;overflow:hidden;isolation:isolate}
+.login::before,.login::after{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(60px);opacity:.6;pointer-events:none}
+.login::before{width:340px;height:340px;background:var(--accent-soft);top:-80px;right:-60px;animation:drift1 14s ease-in-out infinite alternate}
+.login::after{width:300px;height:300px;background:color-mix(in srgb,var(--accent) 22%,transparent);bottom:-90px;left:-70px;animation:drift2 18s ease-in-out infinite alternate}
+
+/* theme / language crossfade */
+::view-transition-old(root),::view-transition-new(root){animation-duration:.5s;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="root"></div>
+
+<script>
+/* ---------- icons ---------- */
+const I={
+ cap:'<path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 2.5 9 2.5 12 0v-5"/>',
+ menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+ x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ home:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+ cal:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>',
+ book:'<path d="M2 4h7a3 3 0 0 1 3 3v14a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v14a2 2 0 0 1 2-2h8z"/>',
+ ask:'<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+ scan:'<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M7 12h10"/>',
+ plan:'<path d="M3 4h18v17H3zM3 9h18M8 2v4M16 2v4M8 14l2.5 2.5L16 12"/>',
+ quiz:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+ users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M17 4.6a3.5 3.5 0 0 1 0 6.8M18 14.7c2 .6 3.2 2.3 3.6 5.3"/>',
+ moon:'<path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/>',
+ bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/>',
+ out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+ check:'<path d="M5 12.5 10 17.5 19 7"/>',
+ arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+ spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',
+ alert:'<path d="M12 3 2 20h20zM12 10v4M12 17v.5"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+ img:'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>',
+ cam:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>',
+ room:'<path d="M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>',
+ send:'<path d="M4 12h12M11 6l6 6-6 6"/>',
+ flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>'
+};
+const ic=(n,c='ico')=>`<svg class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- UI text ---------- */
+const D={
+uz:{app:'Azai Academy',sub:'AI maktab yordamchisi',school:'Azai Academy',
+ login_t:'Hisobingizga kiring',login_s:'Login va parolingiz bilan o‘z ish muhitingizga o‘ting.',login:'Login',pass:'Parol',loginph:'Loginingiz',passph:'Parolingiz',enter:'Kirish',bad:'Login yoki parol noto‘g‘ri.',demo:'Demo hisoblar',d_stu:'O‘quvchi sifatida',d_par:'Ota-ona sifatida',demo_note:'Demo versiya. Haqiqiy maktab tizimi emas.',
+ work:'Ish muhiti',tools:'AI vositalari',family:'Oila',home:'Bosh sahifa',day:'Mening kunim',sched:'Dars jadvali',hw:'Uyga vazifa',ask:'Maktabdan so‘ra',snap:'SnapHomework',plan:'AI Planner',quiz:'AI Quiz',tutor:'AI repetitor',par:'Ota-onam',dark:'Tungi',light:'Kunduzgi',out:'Chiqish',student:'O‘quvchi',parent:'Ota-ona',
+ date:'28-oktabr, chorshanba',greet:'Xayrli kun',lessons:'Bugungi darslar',todo:'Topshirish kerak',tests:'Nazorat ishlari',done:'Bajarilgan',
+ over:'Bugungi darslar tugadi',next:'Keyingi dars kuni: Ertaga',prio:'Bugungi ustuvorliklar',prio_s:'Eng muhimi yuqorida',goHw:'Uyga vazifaga o‘tish',todaySch:'Bugungi jadval',deadl:'Yaqinlashayotgan muddatlar',news:'E’lonlar',
+ overdue:'Muddati o‘tgan',today:'Bugun',upc:'Kelgusi',soon:'Yaqin kunlarda',test:'Nazorat ishi',given:'Bergan',
+ myday_s:'Bugungi kun bitta oqimda: darslar, vazifalar va shaxsiy rejalar.',lessonTime:'Dars vaqti',afterL:'Darsdan keyin',approx:'Taxminan',minWork:'daqiqa ish',personal:'Shaxsiy vazifalar',
+ hw_s:'Barcha topshiriqlar bitta ro‘yxatda',all:'Barchasi',doneF:'Bajarilgan',finished:'bajarildi',
+ week:'9-A sinfining haftalik jadvali',nl:'ta dars',room:'xona',
+ ask_s:'Maktab ma’lumotlari, AI bilimi va jonli internet qidiruvi, bitta joyda.',askph:'Maktab, dars yoki istalgan mavzu haqida so‘rang',askb:'So‘rash',wk:'Nima bilmoqchisiz?',wk_s:'Jadval va vazifalar maktab ma’lumotlaridan olinadi. Qolgan savollarga AI javob beradi va kerak bo‘lsa internetdan qidiradi.',qs:'Tez savollar',askfoot:'Maktab faktlari Azai Academy yozuvlaridan olinadi. AI javoblarini tekshirib ko‘ring.',thinking:'Javob tayyorlanmoqda…',s_school:'Maktab ma’lumoti',s_ai:'AI bilimi',
+ snap_t:'Uy vazifasini rasmga oling',snap_s:'Masala yoki topshiriq rasmini yuklang. Azai Academy uni tushunishga yordam beradi.',drop:'Rasmni shu yerga tashlang yoki fayl tanlang',drop_s:'JPEG, PNG yoki WEBP · 8 MB gacha',upl:'Rasm yuklash',camb:'Kamera',noimg:'Hali rasm yuklanmadi',noimg_s:'Vazifa rasmini yuklang. Azai Academy uni birga tahlil qiladi.',analyzing:'Rasm tahlil qilinmoqda…',too:'Fayl 8 MB dan katta yoki rasm emas.',another:'Boshqa rasm',res_t:'Vazifani tushunish rejasi',
+ plan_e:'AI Planner',plan_t:'Bugungi o‘qish rejangiz',plan_s:'Uy vazifalari, testlar va dars jadvalingiz asosida Azai Academy sizga real o‘qish rejasini tuzadi.',cond:'Reja shartlari',avail:'Mavjud vaqt',m30:'30 daqiqa',h1:'1 soat',h2:'2 soat',h3:'3 soat',tempo:'Temp',easy:'Yengil',bal:'Muvozanatli',int:'Intensiv',inplan:'Rejaga olinadigan ishlar',real:'ta real topshiriq',late1:'1 tasi kechikkan',start:'Boshlanish',mk:'Bugungi rejamni tuz',brk:'Tanaffus',minShort:'daq',plan_none:'Reja tayyor. Ro‘yxat vaqtga mos qilib qisqartirildi.',left:'Vaqt yetmagan vazifalar ertaga qoldi',
+ quiz_e:'AI Quiz',quiz_t:'Bilimingizni sinab ko‘ring',quiz_s:'Fan va mavzuni tanlang. Har bir javobdan keyin Azai Academy nima uchun shundayligini tushuntiradi.',qcond:'Quiz shartlari',subj:'Fan',topic:'Mavzu',topicph:'Masalan: Kvadrat tenglamalar',qn:'Savollar soni',lvl:'Daraja',easy2:'Oson',mid:'O‘rta',hard:'Qiyin',qcount:' ta savol',go:'Boshlash',prev:'Oldingi quizlar',noq:'Hali quiz yechmadingiz.',qnote:'Quiz natijasi shu mashqning hisobi, bilim darajangizning o‘lchovi emas.',newq:'Yangi quiz',qof:'-SAVOL',hintb:'Ishora',wrongT:'Noto‘g‘ri',rightT:'To‘g‘ri',rightA:'To‘g‘ri javob',why:'Nega?',nextq:'Keyingi savol',finish:'Natijani ko‘rish',result:'Natija',again:'Yana urinib ko‘rish',aiq:'AI savollari',
+ tu_e:'AI repetitor',tu_t:'AI repetitor',tu_s:'Mavzuni tanlang. Azai Academy sizga bosqichma-bosqich tushuntiradi va bilimingizga moslashadi.',tu_start:'Mashg‘ulotni boshlash',how:'Qanday ishlaymiz?',m1:'Tushuntir',m1s:'Mavzuni tushuntiradi va misol ko‘rsatadi',m2:'Mashq qilamiz',m2s:'Birgalikda mashq qilasiz',m3:'Meni sinab ko‘r',m3s:'Savol beradi, javobni darhol aytmaydi',which:'Qaysi mavzuni mustahkamlamoqchisiz?',notstart:'Mashg‘ulot hali boshlanmagan',notstart_s:'Fan va mavzuni tanlang. Repetitor shu yerda tushuntira boshlaydi.',reply:'Javobingiz…',
+ par_t:'Ota-onalar uchun',par_s:'Farzandingizning bugungi holati va yaqin muddatlar.',child:'Farzand',progress:'Haftalik bajarilish',attn:'E’tibor kerak',cls:'Sinf rahbari',nonotif:'Kechikkan vazifa yo‘q.',tsub:'Dars boshlanadi'},
+ru:{app:'Azai Academy',sub:'ИИ-помощник школы',school:'Azai Academy',
+ login_t:'Войдите в аккаунт',login_s:'Введите логин и пароль, чтобы открыть своё рабочее пространство.',login:'Логин',pass:'Пароль',loginph:'Ваш логин',passph:'Ваш пароль',enter:'Войти',bad:'Неверный логин или пароль.',demo:'Демо-аккаунты',d_stu:'Войти как ученик',d_par:'Войти как родитель',demo_note:'Демо-версия. Это не настоящая школьная система.',
+ work:'Рабочее место',tools:'ИИ-инструменты',family:'Семья',home:'Главная',day:'Мой день',sched:'Расписание',hw:'Домашка',ask:'Спроси школу',snap:'SnapHomework',plan:'ИИ-планер',quiz:'ИИ-квиз',tutor:'ИИ-репетитор',par:'Родителям',dark:'Ночной',light:'Дневной',out:'Выйти',student:'Ученик',parent:'Родитель',
+ date:'28 октября, среда',greet:'Добрый день',lessons:'Уроков сегодня',todo:'Сдать',tests:'Контрольные',done:'Выполнено',
+ over:'Сегодняшние уроки закончились',next:'Следующий учебный день: завтра',prio:'Приоритеты на сегодня',prio_s:'Самое важное сверху',goHw:'К домашним заданиям',todaySch:'Расписание на сегодня',deadl:'Ближайшие сроки',news:'Объявления',
+ overdue:'Просрочено',today:'Сегодня',upc:'Предстоит',soon:'В ближайшие дни',test:'Контрольная',given:'Задал',
+ myday_s:'Весь день в одном потоке: уроки, задания и личные планы.',lessonTime:'Уроки',afterL:'После уроков',approx:'Примерно',minWork:'мин работы',personal:'Личные задачи',
+ hw_s:'Все задания в одном списке',all:'Все',doneF:'Выполнено',finished:'выполнено',
+ week:'Расписание 9-А класса на неделю',nl:'ур.',room:'каб.',
+ ask_s:'Данные школы, знания ИИ и поиск в интернете в одном месте.',askph:'Спросите о школе, уроке или любой теме',askb:'Спросить',wk:'Что хотите узнать?',wk_s:'Расписание и задания берутся из данных школы. На остальное отвечает ИИ, при необходимости ищет в интернете.',qs:'Быстрые вопросы',askfoot:'Школьные факты берутся из записей Azai Academy. Проверяйте ответы ИИ.',thinking:'Готовлю ответ…',s_school:'Данные школы',s_ai:'Знания ИИ',
+ snap_t:'Сфотографируйте домашку',snap_s:'Загрузите фото задачи или задания. Azai Academy поможет разобраться.',drop:'Перетащите фото сюда или выберите файл',drop_s:'JPEG, PNG или WEBP · до 8 МБ',upl:'Загрузить фото',camb:'Камера',noimg:'Фото пока нет',noimg_s:'Загрузите фото задания, и Azai Academy разберёт его вместе с вами.',analyzing:'Анализирую фото…',too:'Файл больше 8 МБ или это не картинка.',another:'Другое фото',res_t:'План разбора задания',
+ plan_e:'ИИ-планер',plan_t:'Ваш план на сегодня',plan_s:'Azai Academy составит реальный план по домашним заданиям, тестам и расписанию.',cond:'Условия плана',avail:'Доступное время',m30:'30 минут',h1:'1 час',h2:'2 часа',h3:'3 часа',tempo:'Темп',easy:'Лёгкий',bal:'Ровный',int:'Интенсивный',inplan:'Что попадёт в план',real:'реальных заданий',late1:'1 просрочено',start:'Старт',mk:'Составить план',brk:'Перерыв',minShort:'мин',plan_none:'План готов. Список сокращён под ваше время.',left:'Не хватило времени, переносим на завтра',
+ quiz_e:'ИИ-квиз',quiz_t:'Проверьте свои знания',quiz_s:'Выберите предмет и тему. После каждого ответа Azai Academy объяснит, почему так.',qcond:'Условия квиза',subj:'Предмет',topic:'Тема',topicph:'Например: Квадратные уравнения',qn:'Количество вопросов',lvl:'Уровень',easy2:'Лёгкий',mid:'Средний',hard:'Сложный',qcount:' вопросов',go:'Начать',prev:'Прошлые квизы',noq:'Вы ещё не решали квизы.',qnote:'Результат квиза относится только к этой попытке и не измеряет ваш уровень знаний.',newq:'Новый квиз',qof:'-Й ВОПРОС',hintb:'Подсказка',wrongT:'Неверно',rightT:'Верно',rightA:'Правильный ответ',why:'ПОЧЕМУ?',nextq:'Следующий вопрос',finish:'Показать результат',result:'Результат',again:'Попробовать ещё',aiq:'Вопросы ИИ',
+ tu_e:'ИИ-репетитор',tu_t:'ИИ-репетитор',tu_s:'Выберите тему. Azai Academy объяснит шаг за шагом и подстроится под ваш уровень.',tu_start:'Начать занятие',how:'Как занимаемся?',m1:'Объясни',m1s:'Объясняет тему и показывает пример',m2:'Тренируемся',m2s:'Решаем вместе',m3:'Проверь меня',m3s:'Задаёт вопросы, ответ сразу не говорит',which:'Какую тему хотите закрепить?',notstart:'Занятие ещё не началось',notstart_s:'Выберите предмет и тему. Репетитор начнёт объяснять здесь.',reply:'Ваш ответ…',
+ par_t:'Для родителей',par_s:'Сегодняшнее состояние ребёнка и ближайшие сроки.',child:'Ребёнок',progress:'Выполнение за неделю',attn:'Требует внимания',cls:'Классный руководитель',nonotif:'Просроченных заданий нет.',tsub:'Урок начнётся'}
+};
+
+/* ---------- data ---------- */
+const SUBJ={
+ tarix:{uz:'Tarix',ru:'История',c:'#b8283e'},mat:{uz:'Matematika',ru:'Математика',c:'#2f66b3'},bio:{uz:'Biologiya',ru:'Биология',c:'#2fae66'},
+ eng:{uz:'Ingliz tili',ru:'Английский',c:'#b87333'},ona:{uz:'Ona tili',ru:'Родной язык',c:'#2e97c4'},kim:{uz:'Kimyo',ru:'Химия',c:'#6bb02f'},
+ fiz:{uz:'Fizika',ru:'Физика',c:'#7a3fb5'},inf:{uz:'Informatika',ru:'Информатика',c:'#c0359b'}};
+Object.assign(SUBJ,{"s1": {"uz": "Kelajak soati", "ru": "Kelajak soati", "c": "#8a5cc7"}, "s2": {"uz": "Chizmachilik", "ru": "Chizmachilik", "c": "#d07a2a"}, "s7": {"uz": "Algebra", "ru": "Algebra", "c": "#2a9d8f"}, "s8": {"uz": "Geometriya", "ru": "Geometriya", "c": "#c2185b"}, "s10": {"uz": "Jismoniy tarbiya", "ru": "Jismoniy tarbiya", "c": "#5b7fd1"}, "s12": {"uz": "Jaxon tarix", "ru": "Jaxon tarix", "c": "#7b8f2a"}, "s13": {"uz": "Adabiyot", "ru": "Adabiyot", "c": "#b5651d"}, "s14": {"uz": "Texnologiya", "ru": "Texnologiya", "c": "#4a6fa5"}, "s15": {"uz": "Tarbiya", "ru": "Tarbiya", "c": "#9c4dcc"}, "s16": {"uz": "Iqtisod / Geografiya", "ru": "Iqtisod / Geografiya", "c": "#1f8a70"}, "s17": {"uz": "Geografiya", "ru": "Geografiya", "c": "#c94c4c"}, "s18": {"uz": "O'zbekiston tarixi", "ru": "O'zbekiston tarixi", "c": "#3c7a89"}, "s19": {"uz": "Huquq", "ru": "Huquq", "c": "#a67c52"}, "s20": {"uz": "Rus tili", "ru": "Rus tili", "c": "#6d597a"}});
+let T={ergashev:'Jasur Ergashev',qurbonova:'Adolat Qurbonova',yusupova:'Dilnoza Yusupova',saidova:'Kamola Saidova',ismoilova:'Gulnora Ismoilova',umarova:'Shahnoza Umarova',tursunov:'Bekzod Tursunov',qodirov:'Sardor Qodirov'};
+let SLOT=[["08:30", "09:15"], ["09:20", "10:05"], ["10:10", "10:55"], ["11:05", "11:50"], ["11:55", "12:40"], ["12:45", "13:30"]];
+let ROOMS={tarix:30,mat:24,bio:21,eng:12,ona:15,kim:19,fiz:22,inf:8};
+let TEACH={tarix:'ergashev',mat:'qurbonova',bio:'yusupova',eng:'saidova',ona:'ismoilova',kim:'umarova',fiz:'tursunov',inf:'qodirov'};
+let WEEK={"26": ["s1", "s2", "eng", "kim", "inf", null], "27": ["eng", "fiz", "s7", "s8", "bio", "s10"], "28": ["ona", "s7", "eng", "s12", "s13", "s14"], "29": ["ona", "s15", "s16", "s17", "s18", "s13"], "30": ["s19", "fiz", "s20", "ona", "s10", null], "31": ["s20", "s7", "s18", "s8", "bio", "kim"]};
+const DOW={uz:{26:['Du','Dushanba'],27:['Se','Seshanba'],28:['Cho','Chorshanba'],29:['Pay','Payshanba'],30:['Ju','Juma'],31:['Sha','Shanba']},
+ ru:{26:['Пн','Понедельник'],27:['Вт','Вторник'],28:['Ср','Среда'],29:['Чт','Четверг'],30:['Пт','Пятница'],31:['Сб','Суббота']}};
+// st: o overdue, t today, n soon, u upcoming; est: minutes
+let HW=[
+ {id:1,s:'fiz',uz:'Tezlanish — 3, 5, 7-masalalar',ru:'Ускорение — задачи 3, 5, 7',st:'o',due:{uz:'1 kun kechikdi',ru:'просрочено на 1 день'},t:'tursunov',est:40},
+ {id:2,s:'mat',uz:'Kvadrat tenglamalar — 12-mashq',ru:'Квадратные уравнения — упражнение 12',st:'t',due:{uz:'Bugun topshiriladi',ru:'Сдать сегодня'},t:'qurbonova',est:35},
+ {id:3,s:'eng',uz:'Unit 4 — Reading & vocabulary',ru:'Unit 4 — Reading & vocabulary',st:'t',due:{uz:'Bugun topshiriladi',ru:'Сдать сегодня'},t:'saidova',est:30},
+ {id:4,s:'bio',uz:'Hujayra tuzilishi bo‘yicha konspekt',ru:'Конспект по строению клетки',st:'n',due:{uz:'Ertaga topshiriladi',ru:'Сдать завтра'},t:'yusupova',est:30},
+ {id:5,s:'bio',uz:'Nazorat ishi: hujayra va to‘qimalar',ru:'Контрольная: клетка и ткани',st:'n',due:{uz:'Ertaga topshiriladi',ru:'Сдать завтра'},t:'yusupova',est:40,test:1},
+ {id:6,s:'ona',uz:'Insho: «Mening kelajak kasbim»',ru:'Сочинение: «Моя будущая профессия»',st:'n',due:{uz:'2 kundan keyin',ru:'Через 2 дня'},t:'ismoilova',est:45},
+ {id:7,s:'tarix',uz:'Amir Temur davri — xronologik jadval',ru:'Эпоха Амира Темура — хронологическая таблица',st:'u',due:{uz:'3 kundan keyin',ru:'Через 3 дня'},t:'ergashev',est:35},
+ {id:8,s:'kim',uz:'Oksidlar — 10-mashq',ru:'Оксиды — упражнение 10',st:'u',due:{uz:'5 kundan keyin',ru:'Через 5 дней'},t:'umarova',est:30}];
+const PERSONAL=[{uz:'Ingliz tili so‘zlarini takrorlash',ru:'Повторить английские слова',m:20},{uz:'Nazorat ishiga tayyorgarlik — 7–10-mavzular',ru:'Подготовка к контрольной — темы 7–10',m:40},{uz:'Kitob o‘qish — 30 bet',ru:'Чтение книги — 30 страниц',m:25}];
+let NEWS=[
+ {i:'scroll',imp:1,uz:['Biologiyadan nazorat ishi — ertaga','9-A sinf uchun nazorat ishi 21-xonada, 1-darsda o‘tkaziladi. Daftar va qalam olib keling.','Nazorat · 28-oktabr'],ru:['Контрольная по биологии завтра','Для 9-А контрольная пройдёт в кабинете 21 на 1-м уроке. Возьмите тетрадь и ручку.','Контрольная · 28 октября']},
+ {i:'flag',uz:['Maktab fan olimpiadasi — ro‘yxatdan o‘tish ochiq','Matematika, fizika va informatika yo‘nalishlari bo‘yicha ro‘yxatdan o‘tish shu hafta yakunlanadi.','Tadbir · 27-oktabr'],ru:['Школьная олимпиада — открыта регистрация','Регистрация по математике, физике и информатике закрывается на этой неделе.','Мероприятие · 27 октября']},
+ {i:'cal',uz:['Juma kuni 5-dars o‘zgartirildi','9-A sinfida juma kuni 5-dars Kimyo xonasida (19-xona) o‘tadi.','Jadval · 26-oktabr'],ru:['В пятницу изменён 5-й урок','У 9-А в пятницу 5-й урок пройдёт в кабинете химии (19).','Расписание · 26 октября']}];
+try{const sn=JSON.parse(localStorage.getItem('ps-news')||'null');if(Array.isArray(sn))NEWS=sn}catch(e){}
+let SITE={cls:'8-A'};
+const siteObj=()=>({cls:SITE.cls,T,ROOMS,TEACH,SLOT,WEEK,HW,NEWS});
+try{const st=JSON.parse(localStorage.getItem('ps-site')||'null');if(st&&typeof st==='object'){
+ if(st.cls)SITE.cls=st.cls;if(st.T)T=st.T;if(st.ROOMS)ROOMS=st.ROOMS;if(st.TEACH)TEACH=st.TEACH;
+ if(st.SLOT)SLOT=st.SLOT;if(st.WEEK)WEEK=st.WEEK;if(st.HW)HW=st.HW;
+ if(st.NEWS&&!localStorage.getItem('ps-news'))NEWS=st.NEWS}}catch(e){}
+const clsFix=h=>h.replace(/(?<![\d])9-[AА](?![\w])/g,SITE.cls);
+const CHILD='Aslbek Karimov';
+
+/* quiz bank: [q, opts, ans, why, hint] each {uz,ru} where text differs */
+const QB={
+ bio:[
+  [{uz:'O‘simlik hujayrasining asosiy energiya manbai nima?',ru:'Что служит основным источником энергии растительной клетки?'},[{uz:'Mitoz',ru:'Митоз'},{uz:'Xloroplast',ru:'Хлоропласт'},{uz:'Ribozom',ru:'Рибосома'},{uz:'Nukleus',ru:'Ядро'}],1,{uz:'Xloroplast fotosintez orqali quyosh energiyasini kimyoviy energiyaga aylantiradi.',ru:'Хлоропласт превращает солнечную энергию в химическую в ходе фотосинтеза.'},{uz:'Yashil rangli organelni eslab ko‘ring.',ru:'Вспомните зелёную органеллу.'}],
+  [{uz:'Qon bosimi o‘lchanadigan birlik qaysi?',ru:'В каких единицах измеряют артериальное давление?'},['mmHg','kPa','psi','J'],0,{uz:'Tibbiyotda qon bosimi millimetr simob ustunida (mmHg) o‘lchanadi.',ru:'В медицине давление крови измеряют в миллиметрах ртутного столба (мм рт. ст.).'},{uz:'Birlik nomida metall bor.',ru:'В названии единицы есть металл.'}],
+  [{uz:'Hujayra yadrosida nima saqlanadi?',ru:'Что хранится в ядре клетки?'},[{uz:'Irsiy ma’lumot (DNK)',ru:'Наследственная информация (ДНК)'},{uz:'Suv zaxirasi',ru:'Запас воды'},{uz:'Xlorofill',ru:'Хлорофилл'},{uz:'Oqsil ishlab chiqarish',ru:'Синтез белка'}],0,{uz:'Yadro DNK ni saqlaydi va hujayra faoliyatini boshqaradi.',ru:'Ядро хранит ДНК и управляет работой клетки.'},{uz:'Bu hujayraning «boshqaruv markazi».',ru:'Это «центр управления» клетки.'}],
+  [{uz:'Oqsil sintezi qaysi organellada boradi?',ru:'В какой органелле идёт синтез белка?'},[{uz:'Ribosoma',ru:'Рибосома'},{uz:'Vakuola',ru:'Вакуоль'},{uz:'Lizosoma',ru:'Лизосома'},{uz:'Hujayra devori',ru:'Клеточная стенка'}],0,{uz:'Ribosomalar aminokislotalarni zanjirga ulab oqsil hosil qiladi.',ru:'Рибосомы соединяют аминокислоты в цепь и создают белок.'},{uz:'Nomi «ribonuklein» so‘zidan.',ru:'Название связано с РНК.'}],
+  [{uz:'Hayvon hujayrasida bo‘lmaydigan struktura qaysi?',ru:'Какая структура отсутствует в животной клетке?'},[{uz:'Mitoxondriya',ru:'Митохондрия'},{uz:'Hujayra devori',ru:'Клеточная стенка'},{uz:'Yadro',ru:'Ядро'},{uz:'Membrana',ru:'Мембрана'}],1,{uz:'Hujayra devori o‘simlik va zamburug‘larda bor, hayvon hujayrasida yo‘q.',ru:'Клеточная стенка есть у растений и грибов, но не у животных.'},{uz:'Qattiq tashqi qobiqni o‘ylang.',ru:'Подумайте о жёсткой внешней оболочке.'}]],
+ mat:[
+  [{uz:'x² − 5x + 6 = 0 tenglamaning ildizlari qaysi?',ru:'Каковы корни уравнения x² − 5x + 6 = 0?'},['2 va 3','1 va 6','−2 va −3','−1 va 6'],0,{uz:'Yig‘indisi 5, ko‘paytmasi 6 bo‘lgan sonlar: 2 va 3 (Viyet teoremasi).',ru:'Числа с суммой 5 и произведением 6: 2 и 3 (теорема Виета).'},{uz:'Viyet teoremasini qo‘llang.',ru:'Примените теорему Виета.'}],
+  [{uz:'x² − 9 = 0 tenglamaning yechimi?',ru:'Решение уравнения x² − 9 = 0?'},['x = 3','x = ±3','x = 9','x = ±9'],1,{uz:'x² = 9, demak x = 3 yoki x = −3.',ru:'x² = 9, значит x = 3 или x = −3.'},{uz:'Kvadratdan ikki ildiz chiqadi.',ru:'Из квадрата получается два корня.'}],
+  [{uz:'Diskriminant formulasi qaysi?',ru:'Какова формула дискриминанта?'},['D = b² − 4ac','D = b² + 4ac','D = 2b − ac','D = a² − 4bc'],0,{uz:'ax² + bx + c = 0 uchun D = b² − 4ac. D > 0 bo‘lsa, ikki ildiz bor.',ru:'Для ax² + bx + c = 0: D = b² − 4ac. При D > 0 два корня.'},{uz:'Harflar tartibiga e’tibor bering: a, b, c.',ru:'Следите за порядком коэффициентов a, b, c.'}],
+  [{uz:'x² + 4 = 0 tenglamaning haqiqiy ildizi nechta?',ru:'Сколько действительных корней у x² + 4 = 0?'},['0','1','2','4'],0,{uz:'x² = −4. Kvadrat manfiy bo‘la olmaydi, haqiqiy ildiz yo‘q.',ru:'x² = −4. Квадрат не бывает отрицательным, действительных корней нет.'},{uz:'D ni hisoblab ko‘ring.',ru:'Посчитайте D.'}],
+  [{uz:'2x² = 8 bo‘lsa, x nimaga teng?',ru:'Если 2x² = 8, чему равно x?',},['±2','2','±4','4'],0,{uz:'x² = 4, shuning uchun x = 2 yoki x = −2.',ru:'x² = 4, поэтому x = 2 или x = −2.'},{uz:'Avval 2 ga bo‘ling.',ru:'Сначала разделите на 2.'}]],
+ fiz:[
+  [{uz:'Tezlanish birligi qaysi?',ru:'Какова единица ускорения?'},['m/s','m/s²','N','J'],1,{uz:'Tezlanish tezlikning o‘zgarish tezligi: (m/s) / s = m/s².',ru:'Ускорение — скорость изменения скорости: (м/с) / с = м/с².'},{uz:'Tezlik birligini vaqtga bo‘ling.',ru:'Разделите единицу скорости на время.'}],
+  [{uz:'Jism 4 s da 0 dan 20 m/s gacha tezlashdi. Tezlanishi?',ru:'Тело разогналось от 0 до 20 м/с за 4 с. Ускорение?'},['5 m/s²','80 m/s²','4 m/s²','0,2 m/s²'],0,{uz:'a = Δv / t = 20 / 4 = 5 m/s².',ru:'a = Δv / t = 20 / 4 = 5 м/с².'},{uz:'a = Δv / t.',ru:'a = Δv / t.'}],
+  [{uz:'Nyutonning ikkinchi qonuni?',ru:'Второй закон Ньютона?'},['F = ma','F = mv','F = m/a','F = a/m'],0,{uz:'Kuch massa va tezlanish ko‘paytmasiga teng.',ru:'Сила равна произведению массы на ускорение.'},{uz:'Kuch, massa va tezlanish bog‘langan.',ru:'Связаны сила, масса и ускорение.'}],
+  [{uz:'Erkin tushish tezlanishi taxminan?',ru:'Ускорение свободного падения примерно равно?'},['1 m/s²','9,8 m/s²','98 m/s²','3 m/s²'],1,{uz:'Yer yuzasida g ≈ 9,8 m/s².',ru:'У поверхности Земли g ≈ 9,8 м/с².'},{uz:'10 ga yaqin son.',ru:'Число около 10.'}],
+  [{uz:'Tekis tezlanuvchan harakatda tezlik...',ru:'При равноускоренном движении скорость...'},[{uz:'o‘zgarmaydi',ru:'не меняется'},{uz:'bir tekis o‘zgaradi',ru:'меняется равномерно'},{uz:'tasodifiy o‘zgaradi',ru:'меняется случайно'},{uz:'nolga teng',ru:'равна нулю'}],1,{uz:'Tezlanish o‘zgarmas, shuning uchun tezlik har sekundda bir xil miqdorda o‘zgaradi.',ru:'Ускорение постоянно, поэтому скорость меняется на одну и ту же величину каждую секунду.'},{uz:'«Tekis» so‘ziga e’tibor bering.',ru:'Обратите внимание на слово «равно».'}]],
+ eng:[
+  [{uz:'Choose the correct form: She ___ to school every day.',ru:'Choose the correct form: She ___ to school every day.'},['go','goes','going','gone'],1,{uz:'Third person singular in Present Simple takes -s/-es: she goes.',ru:'В Present Simple с she/he/it добавляется -s/-es: she goes.'},{uz:'She = 3-shaxs birlik.',ru:'She — третье лицо, ед. число.'}],
+  [{uz:'Past simple of "buy"?',ru:'Past simple от "buy"?'},['buyed','bought','boughten','buys'],1,{uz:'"Buy" noto‘g‘ri fe’l: buy – bought – bought.',ru:'"Buy" — неправильный глагол: buy – bought – bought.'},{uz:'Noto‘g‘ri fe’l.',ru:'Неправильный глагол.'}],
+  [{uz:'Synonym of "big"?',ru:'Синоним слова "big"?'},['tiny','huge','narrow','slow'],1,{uz:'"Huge" ham "katta" degani.',ru:'"Huge" тоже значит «огромный».'},{uz:'Ma’nosi o‘xshash so‘z.',ru:'Слово с похожим значением.'}],
+  [{uz:'I have lived here ___ 2020.',ru:'I have lived here ___ 2020.'},['for','since','during','from'],1,{uz:'Aniq vaqt nuqtasi bilan "since" ishlatiladi.',ru:'С точкой во времени используется "since".'},{uz:'2020 — vaqt nuqtasi.',ru:'2020 — момент времени.'}],
+  [{uz:'Plural of "child"?',ru:'Множественное число от "child"?'},['childs','childes','children','childrens'],2,{uz:'"Child" ning ko‘pligi children.',ru:'Множественное число от child — children.'},{uz:'Maxsus shakl.',ru:'Особая форма.'}]]};
+const QSUBJ=[['bio','bio'],['mat','mat'],['fiz','fiz'],['eng','eng']];
+
+/* ---------- state ---------- */
+const ACC_DEF={student:{pw:'student',role:'student',name:'Aslbek',surname:'Karimov',cls:'8-A',ini:'AK',photo:''},ota:{pw:'1234',role:'parent',name:'Ota-ona',surname:'',cls:'',ini:'OO',photo:''},developer:{pw:'dev2026',role:'developer',name:'Developer',surname:'',cls:'',ini:'DV',photo:''}};
+let ACC=(()=>{try{const s=JSON.parse(localStorage.getItem('ps-accounts')||'null');if(s&&typeof s==='object'){if(!s.developer)s.developer=JSON.parse(JSON.stringify(ACC_DEF.developer));return s}}catch(e){}return JSON.parse(JSON.stringify(ACC_DEF))})();
+const saveAcc=()=>{try{localStorage.setItem('ps-accounts',JSON.stringify(ACC))}catch(e){alert('Saqlashda xatolik. Rasm juda katta bo‘lishi mumkin.')}};
+const saveNews=()=>{try{localStorage.setItem('ps-news',JSON.stringify(NEWS));const st=JSON.parse(localStorage.getItem('ps-site')||'null');if(st){st.NEWS=NEWS;localStorage.setItem('ps-site',JSON.stringify(st))}}catch(e){alert('Yangilikni saqlashda xatolik.')}};
+const userKey=()=>Object.keys(ACC).find(k=>ACC[k]===S.user);
+const initOf=a=>(((a.name||'')[0]||'')+((a.surname||'')[0]||'')).toUpperCase()||'U';
+const fullName=u=>[u.name,u.surname].filter(Boolean).join(' ');
+const avh=u=>u.photo?`<img src="${u.photo}" alt="">`:u.ini;
+const L2=(uz,ru)=>S.lang==='uz'?uz:ru;
+const DAYS={uz:['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'],ru:['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота']};
+const MONS={uz:['yanvar','fevral','mart','aprel','may','iyun','iyul','avgust','sentabr','oktabr','noyabr','dekabr'],ru:['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря']};
+const todayLabel=()=>{const d=new Date();const day=d.getDate(),lang=(typeof S!=='undefined'&&S.lang)||'uz';return (lang==='uz'?`${day}-${MONS.uz[d.getMonth()]}, ${DAYS.uz[d.getDay()]}`:`${day} ${MONS.ru[d.getMonth()]}, ${DAYS.ru[d.getDay()]}`).toUpperCase()};
+const curD=(()=>{const d=new Date().getDate();return [26,27,28,29,30,31].includes(d)?d:26})();
+const S={anim:true,fx:null,sc:null,lang:'uz',user:null,done:new Set(),pdone:new Set(),f:'all',day:curD,drawer:false,acct:false,showPw:false,loginErr:false,
+ ask:{q:'',res:null,busy:false},snap:{img:null,busy:false,err:false},
+ plan:{min:60,tempo:'bal',res:null},
+ quiz:{subj:'bio',topic:'',n:5,lvl:'mid',run:null,hist:[]},
+ tu:{subj:'bio',topic:'',mode:'explain',chat:null}};
+try{S.lang=localStorage.getItem('ps-lang')||'uz'}catch(e){}
+try{const th=localStorage.getItem('ps-theme');if(th)document.documentElement.dataset.theme=th}catch(e){}
+const t=k=>D[S.lang][k]||D.uz[k]||k;
+const dn=u=>u.role==='parent'?t('parent'):fullName(u);
+const rl=u=>u.role==='parent'?(S.lang==='uz'?'Farzand: Aslbek':'Ребёнок: Aslbek'):u.role==='developer'?'Developer':t(u.role)+(u.cls?' · '+u.cls:'');
+const L=o=>typeof o==='string'?o:(o[S.lang]||o.uz);
+const sn=k=>SUBJ[k][S.lang];
+const tag=k=>`<span class="tag" style="color:${SUBJ[k].c};background:color-mix(in srgb,${SUBJ[k].c} 13%,var(--surface))"><i></i><span style="color:var(--fg)">${sn(k)}</span></span>`;
+const stBadge=h=>{if(h.test)return`<span class="badge b-info">${ic('cal')} ${t('test')}</span>`;
+ if(h.st==='o')return`<span class="badge b-bad">${ic('alert')} ${t('overdue')}</span>`;
+ if(h.st==='t')return`<span class="badge b-warn">${ic('clock')} ${t('today')}</span>`;
+ if(h.st==='n')return`<span class="badge b-info">${ic('cal')} ${t('soon')}</span>`;
+ return`<span class="badge b-mute">${t('upc')}</span>`};
+const isDone=h=>S.done.has(h.id);
+const pad=n=>String(n).padStart(2,'0');
+
+/* ---------- routes ---------- */
+const ROUTES=[['bosh','home','work'],['kunim','sun','work'],['jadval','cal','work'],['vazifa','book','work'],['sorash','ask','tools'],['rasm','scan','tools'],['reja','plan','tools'],['quiz','quiz','tools'],['repetitor','cap','tools'],['ota-onam','users','family'],['profil','users','work'],['dev','flag','tools']];
+const NAVK={bosh:'home',kunim:'day',jadval:'sched',vazifa:'hw',sorash:'ask',rasm:'snap',reja:'plan',quiz:'quiz',repetitor:'tutor','ota-onam':'par',profil:'profil',dev:'devp'};
+Object.assign(D.uz,{profil:'Profil',devp:'Developer paneli'});Object.assign(D.ru,{profil:'Профиль',devp:'Панель разработчика'});
+const route=()=>{const h=location.hash.slice(1);return ROUTES.some(r=>r[0]===h)?h:'bosh'};
+const go=r=>{if(location.hash.slice(1)===r)render();else location.hash=r};
+
+/* ---------- views ---------- */
+function markSvg(){return`<svg viewBox="0 0 200 200" fill="currentColor" aria-hidden="true"><path d="M100 36 Q102 68 130 70 Q102 72 100 104 Q98 72 70 70 Q98 68 100 36 Z"/><path d="M26 118 Q64 100 100 124 Q136 100 174 118 L174 134 Q136 118 100 142 Q64 118 26 134 Z"/></svg>`}
+function logo(){return`<span class="logo">${markSvg()}</span>`}
+function viewLogin(){
+ return`<div class="login"><header class="login-head"><div class="brand">${logo()}<div><b>${t('app')}</b><span>${t('sub')}</span></div></div>${langSeg()}</header>
+ <div class="login-body"><form class="login-card" id="lf" autocomplete="off">
+ <div><h1>${t('login_t')}</h1><p class="muted" style="margin-top:6px">${t('login_s')}</p></div>
+ <label for="lg">${t('login')}<input type="text" id="lg" placeholder="${t('loginph')}" autocapitalize="none" autocorrect="off"></label>
+ <label for="pw">${t('pass')}<input type="password" id="pw" placeholder="${t('passph')}"></label>
+ ${S.loginErr?`<p class="err" role="alert">${t('bad')}</p>`:''}
+ <button class="btn primary block" type="submit">${t('enter')}</button>
+ <div class="demo"><span class="eyebrow" style="color:var(--muted)">${t('demo')}</span>
+  <div class="demo-row"><button type="button" class="btn" data-act="demo" data-v="student">${ic('cap')} ${t('d_stu')}</button><button type="button" class="btn" data-act="demo" data-v="ota">${ic('users')} ${t('d_par')}</button></div>
+  <p class="note">${t('demo_note')}</p></div>
+ </form></div></div>`}
+function langSeg(){return`<div class="seg" role="group" aria-label="Language"><button data-act="lang" data-v="uz" class="${S.lang==='uz'?'on':''}">UZ</button><button data-act="lang" data-v="ru" class="${S.lang==='ru'?'on':''}">RU</button></div>`}
+function isDark(){const d=document.documentElement.dataset.theme;return d?d==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
+
+function shell(r,body){
+ const u=S.user,parent=u.role==='parent';
+ const items=ROUTES.filter(x=>(parent?['ota-onam','jadval','vazifa','profil'].includes(x[0]):true)&&(x[0]!=='dev'||u.role==='developer'));
+ let nav='',g='';
+ items.forEach(([k,i,gr])=>{if(gr!==g){g=gr;nav+=`<div class="grp">${t(gr)}</div>`}nav+=`<a class="nav-a ${r===k?'on':''}" href="#${k}" data-act="nav">${ic(i)}${t(NAVK[k])}</a>`});
+ const bn=(parent?[['ota-onam','users'],['jadval','cal'],['vazifa','book']]:[['bosh','home'],['kunim','sun'],['jadval','cal'],['vazifa','book']]);
+ const bottom=bn.map(([k,i])=>`<a href="#${k}" class="${r===k?'on':''}">${ic(i)}${t(NAVK[k])}</a>`).join('');
+ return`<div class="app">
+ <div class="scrim ${S.drawer?'show':''}" data-act="drawer"></div>
+ <aside class="side ${S.drawer?'open':''}" aria-label="Menu">
+  <div class="side-top"><div class="brand">${logo()}<div><b>${t('app')}</b><span>${t('sub')}</span></div></div><button class="icon-btn menu-btn" data-act="drawer" aria-label="Close">${ic('x')}</button></div>
+  <div class="who"><span class="avatar">${avh(u)}</span><div style="min-width:0"><b style="font-weight:500">${dn(u)}</b><div class="muted sm">${rl(u)}</div></div></div>
+  ${nav}
+  <div class="side-foot"><div style="display:flex;justify-content:space-between;align-items:center">${langSeg()}<button class="btn" data-act="theme">${ic(isDark()?'sun':'moon')} ${isDark()?t('light'):t('dark')}</button></div>
+  <button class="btn block" data-act="logout">${ic('out')} ${t('out')}</button><span class="note">${t('school')}</span></div>
+ </aside>
+ <div class="main"><header class="top"><button class="icon-btn menu-btn" data-act="drawer" aria-label="Menu">${ic('menu')}</button><span class="logo menu-btn" style="width:30px;height:30px;border-radius:8px">${markSvg()}</span>
+  <div class="pill-user"><span class="avatar">${avh(u)}</span><div><b>${dn(u)}</b><span class="muted sm role">${u.role==='student'?ic('cap','ico xs')+' ':''}${rl(u)}</span></div></div>
+  <div class="top-act">${langSeg()}<button class="icon-btn" data-act="theme" aria-label="Theme">${ic(isDark()?'sun':'moon')}</button><button class="icon-btn bell" aria-label="Notifications">${ic('bell')}</button><button class="avatar-btn" data-act="acct" aria-label="Account" aria-haspopup="true" aria-expanded="${S.acct}">${avh(u)}</button></div>
+  <div class="acct-pop ${S.acct?'open':''}" role="dialog" aria-label="Account"><span class="eyebrow" style="color:var(--muted)">${S.lang==='uz'?'Tizimdagi hisob':'Текущий аккаунт'}</span>
+   <div class="acct-who"><span class="avatar big">${avh(u)}</span><div style="min-width:0"><b>${dn(u)}</b><div class="muted sm">${rl(u)}</div></div></div>
+   <p class="acct-note">${t('demo_note')}</p>
+   <button class="btn block" data-act="logout">${ic('out')} ${t('out')}</button></div></header>
+  <main class="page">${body}</main></div>
+ <nav class="bottom" aria-label="Tabs">${bottom}</nav></div>`}
+
+const head=(e,h,s)=>`<div class="head">${e?`<span class="eyebrow">${e}</span>`:''}<h1>${h}</h1>${s?`<p class="muted">${s}</p>`:''}</div>`;
+const empty=(i,a,b)=>`<div class="empty"><span class="eic">${ic(i)}</span><b>${a}</b><span class="sm" style="max-width:34ch">${b}</span></div>`;
+let ttEdit=false;
+const ttWeek=()=>WEEK;
+const ttEditorHtml=()=>{const d=S.day,W=ttWeek()[d]||[];
+ const opts=sel=>`<option value="">— ${L2('bo‘sh','пусто')} —</option>`+Object.keys(SUBJ).map(k=>`<option value="${k}" ${sel===k?'selected':''}>${sn(k)}</option>`).join('');
+ const cells=SLOT.map((sl,i)=>`<label>${sl[0]} · ${L2((i+1)+'-dars',(i+1)+'-урок')}<select id="tt-${i}">${opts(W[i]||'')}</select></label>`).join('');
+ return `<section class="sect"><h2>${L2('Mening jadvalim','Моё расписание')}</h2><div class="card form">
+  ${ttEdit?`${cells}<div class="chips"><button class="btn primary" data-act="ttsave">${ic('check')} ${L2('Saqlash','Сохранить')}</button><button class="btn" data-act="ttreset">${ic('x')} ${L2('Standartga qaytarish','Сбросить')}</button><button class="btn" data-act="ttedit">${L2('Bekor qilish','Отмена')}</button></div>`
+  :`<button class="btn primary" data-act="ttedit">${ic('spark')} ${L2('Jadvalni tahrirlash','Редактировать расписание')}</button>`}
+  <p class="note">${L2('Har bir kun uchun o‘z darslaringizni tanlang. Faqat siz ko‘rasiz.','Выберите свои уроки на каждый день. Видите только вы.')}</p></div></section>`};
+const lessonsHtml=d=>`<div class="card list">${ttWeek()[d].map((k,i)=>!k?'':`<div class="lesson"><div class="tm"><b>${SLOT[i][0]}</b><span class="muted sm">${SLOT[i][1]}</span></div><span class="dot" style="background:${SUBJ[k].c}"></span><div class="info"><div class="subj">${sn(k)}</div><div class="muted sm room">${ic('room')}<span>${ROOMS[k]?`${ROOMS[k]}-${t('room')}`:''}${TEACH[k]&&T[TEACH[k]]?` · ${T[TEACH[k]]}`:''}</span></div></div></div>`).join('')}</div>`;
+const hwRow=(h,full)=>`<div class="row ${isDone(h)?'done':''}"><button class="chk ${isDone(h)?'on':''}" data-act="tog" data-v="${h.id}" aria-label="done" aria-pressed="${isDone(h)}">${ic('check')}</button>
+ <div class="grow"><div class="t">${L(h)}</div><div class="meta">${tag(h.s)}<span>${L(h.due)}</span>${full?`<span>${t('given')}: ${T[h.t]}</span>`:''}</div></div>${stBadge(h)}</div>`;
+
+function vBosh(){
+ const open=HW.filter(h=>!isDone(h)),n=HW.filter(isDone).length;
+ const prio=open.filter(h=>h.st!=='u').slice(0,4);
+ const tests=HW.filter(h=>h.test).length;
+ return head(`${ic('cal')} ${todayLabel()}`,`${t('greet')}, ${S.user.name}.`)+
+ `<div class="card stats"><div><small>${t('lessons')}</small><b>${(ttWeek()[curD]||[]).filter(Boolean).length}</b></div><div><small>${t('todo')}</small><b style="color:var(--warn)">${HW.filter(h=>h.st==='o'||h.st==='t').length}</b></div><div><small>${t('tests')}</small><b>${tests+2}</b></div><div><small>${t('done')}</small><b style="color:var(--accent)">${n} / ${HW.length}</b></div></div>
+ <div class="card pad" style="display:flex;gap:12px;align-items:center"><span class="muted">${ic('flag')}</span><div><b style="font-weight:500">${t('over')}</b><div class="muted sm">${t('next')}</div></div></div>
+ <section class="sect"><div class="sect-h"><div><h2>${t('prio')}</h2><span class="muted sm">${t('prio_s')}</span></div><a class="link" href="#vazifa">${t('goHw')} →</a></div><div class="card list">${prio.map(h=>hwRow(h)).join('')||empty('check','✓','')}</div></section>
+ <section class="sect"><h2>${t('todaySch')}</h2>${lessonsHtml(curD)}</section>
+ <section class="sect"><h2>${t('deadl')}</h2><div class="card list">${HW.filter(h=>h.st!=='o').slice(0,5).map(h=>`<div class="row"><span class="dot" style="background:${SUBJ[h.s].c}"></span><div class="grow"><div class="t">${L(h)}</div><div class="meta">${sn(h.s)} · ${h.test?t('test'):t('hw')}</div></div><span class="muted sm" style="text-align:right">${L(h.due)}</span></div>`).join('')}</div></section>
+ <section class="sect"><h2>${t('news')}</h2><div class="card list">${NEWS.map(n=>{const x=L(n);return`<div class="notice"><span class="ni">${ic(n.i==='scroll'?'book':n.i)}</span><div style="min-width:0"><div style="font-weight:500">${x[0]} ${n.imp?`<span class="badge b-acc" style="margin-left:4px">${S.lang==='uz'?'MUHIM':'ВАЖНО'}</span>`:''}</div><p class="muted" style="margin-top:2px">${x[1]}</p><span class="note">${x[2]}</span></div></div>`}).join('')}</div></section>`}
+
+function vKunim(){
+ const open=HW.filter(h=>h.st!=='u'||h.id===8?true:false).slice(0,5);
+ const mins=HW.filter(h=>!isDone(h)&&h.st!=='u').reduce((a,h)=>a+h.est,0);
+ return head(t('date'),t('day'),t('myday_s'))+
+ `<section class="sect"><h2>${t('lessonTime')}</h2>${lessonsHtml(curD)}</section>
+ <section class="sect"><div><h2>${t('afterL')}</h2><span class="muted sm">${t('approx')} ${mins} ${t('minWork')}</span></div><div class="card list">${HW.filter(h=>h.st!=='u').map(h=>hwRow(h)).join('')}</div></section>
+ <section class="sect"><h2>${t('personal')}</h2><div class="card list">${PERSONAL.map((p,i)=>`<div class="row ${S.pdone.has(i)?'done':''}"><button class="chk ${S.pdone.has(i)?'on':''}" data-act="ptog" data-v="${i}" aria-label="done">${ic('check')}</button><div class="grow t">${L(p)}</div><span class="muted sm tnum">${ic('clock')} ${p.m} ${t('minShort')}</span></div>`).join('')}</div></section>`}
+
+function vJadval(){return vJadvalBase()}
+function vJadvalBase(){
+ const d=S.day,dw=DOW[S.lang];
+ return head(`26-${S.lang==='uz'?'okt':'окт'} – 31-${S.lang==='uz'?'okt':'окт'}`,t('sched'),t('week'))+
+ `<div class="days">${[26,27,28,29,30,31].map(x=>`<button class="day ${x===d?'on':''} ${x===curD?'today':''}" data-act="day" data-v="${x}">${dw[x][0]}<b>${x}</b></button>`).join('')}</div>
+ <section class="card"><div class="sect-h" style="padding:12px 14px;border-bottom:1px solid var(--line)"><b style="font-weight:500">${dw[d][1]}</b><span class="muted sm">${ttWeek()[d].filter(Boolean).length} ${t('nl')}</span></div>${lessonsHtml(d).replace('class="card list"','class="list"')}</section>`}
+
+function vVazifa(){
+ const f=S.f,cnt={all:HW.length,o:HW.filter(h=>h.st==='o'&&!isDone(h)).length,t:HW.filter(h=>h.st==='t'&&!isDone(h)).length,u:HW.filter(h=>(h.st==='u'||h.st==='n')&&!isDone(h)).length,d:HW.filter(isDone).length};
+ const list=HW.filter(h=>f==='all'?true:f==='d'?isDone(h):!isDone(h)&&(f==='o'?h.st==='o':f==='t'?h.st==='t':(h.st==='u'||h.st==='n')));
+ const n=cnt.d,pct=Math.round(n/HW.length*100);
+ const tabs=[['all',t('all')],['o',t('overdue')],['t',t('today')],['u',t('upc')],['d',t('doneF')]];
+ return head('',t('hw'),t('hw_s'))+
+ `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:space-between"><div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button class="${f===k?'on':''}" data-act="filt" data-v="${k}">${l}<span>${cnt[k]}</span></button>`).join('')}</div>
+ <div style="display:flex;gap:10px;align-items:center;min-width:160px"><span class="muted sm tnum">${n} / ${HW.length} ${t('finished')}</span><div class="bar" style="width:70px"><i style="width:${pct}%"></i></div><span class="muted sm tnum">${pct}%</span></div></div>
+ <div class="card list">${list.map(h=>hwRow(h,1)).join('')||`<div style="padding:24px;text-align:center" class="muted">—</div>`}</div>`}
+
+/* ask */
+function answerFor(q){
+ const s=q.toLowerCase(),uz=S.lang==='uz';
+ const first=ttWeek()[29].find(Boolean)||'mat';
+ if(/ertaga|завтра|tomorrow/.test(s)&&/(birinchi|1|перв)/.test(s))return{src:'school',h:uz?`Ertaga, 29-oktabr, birinchi dars ${sn(first)}: ${SLOT[0][0]} da, ${ROOMS[first]}-xonada (${T[TEACH[first]]}).`:`Завтра, 29 октября, первый урок: ${sn(first)} в ${SLOT[0][0]}, кабинет ${ROOMS[first]} (${T[TEACH[first]]}).`};
+ if(/bugun.*vazifa|vazifalarni|сегодня|домаш|topshir/.test(s)){const l=HW.filter(h=>(h.st==='o'||h.st==='t')&&!isDone(h));return{src:'school',h:(uz?'Bugun topshirish kerak:':'Сегодня нужно сдать:')+'<br>'+l.map(h=>`• ${L(h)} (${sn(h.s)}, ${L(h.due)})`).join('<br>')}}
+ if(/nazorat|контрол/.test(s))return{src:'school',h:uz?'Bu hafta 3 ta nazorat ishi bor. Eng yaqini ertaga: Biologiya, «Hujayra va to‘qimalar», 21-xonada, 1-darsda.':'На этой неделе 3 контрольные. Ближайшая завтра: биология, «Клетка и ткани», кабинет 21, 1-й урок.'};
+ if(/biolog|биолог/.test(s)&&/(qachon|когда|keyingi|следующ)/.test(s))return{src:'school',h:uz?`Keyingi biologiya darsi ertaga ${SLOT[0][0]} da emas, payshanba kuni 5-darsda emas: jadvalga ko‘ra payshanba (29-oktabr) 5-dars, 21-xonada.`:`Следующий урок биологии: четверг, 29 октября, 5-й урок, кабинет 21.`};
+ if(/kvadrat|квадрат/.test(s))return{src:'ai',h:uz?'Kvadrat tenglama: ax² + bx + c = 0. Avval D = b² − 4ac ni hisoblang. D > 0 bo‘lsa x = (−b ± √D) / 2a, D = 0 bo‘lsa bitta ildiz, D < 0 bo‘lsa haqiqiy ildiz yo‘q.<br>Misol: x² − 5x + 6 = 0 → D = 1, x = 2 va x = 3.':'Квадратное уравнение: ax² + bx + c = 0. Сначала найдите D = b² − 4ac. Если D > 0, то x = (−b ± √D) / 2a; если D = 0, один корень; если D < 0, действительных корней нет.<br>Пример: x² − 5x + 6 = 0 → D = 1, x = 2 и x = 3.'};
+ if(/yangilik|новост|ilm-fan/.test(s))return{src:'ai',h:uz?'Jonli internet qidiruvi bu demo versiyada ulanmagan. Haqiqiy versiyada bu yerda bugungi ilm-fan yangiliklari chiqadi.':'Живой поиск в интернете в демо-версии не подключён. В полной версии здесь будут сегодняшние новости науки.'};
+ return{src:'ai',h:uz?'Bu savol maktab ma’lumotlarida topilmadi. Haqiqiy versiyada Azai Academy AI uni o‘z bilimi va internet qidiruvi orqali javoblaydi. Demo uchun jadval, vazifa, nazorat ishi yoki kvadrat tenglama haqida so‘rab ko‘ring.':'В данных школы ответа нет. В полной версии Azai Academy ответит из знаний ИИ и поиска в интернете. Для демо спросите про расписание, задания, контрольные или квадратные уравнения.'};
+}
+function vSorash(){
+ const qs=S.lang==='uz'?['Ertaga birinchi darsim nima?','Bugun qaysi vazifalarni topshirishim kerak?','Bu hafta nechta nazorat ishim bor?','Keyingi biologiya darsim qachon?','Kvadrat tenglamani qisqacha tushuntir','Bugungi ilm-fan yangiliklarini top']:['Какой завтра первый урок?','Какие задания мне надо сдать сегодня?','Сколько контрольных на этой неделе?','Когда следующий урок биологии?','Коротко объясни квадратные уравнения','Найди сегодняшние новости науки'];
+ const a=S.ask;
+ return head('',t('ask'),t('ask_s'))+
+ `<form id="af" class="card ask-box">${ic('ask')}<input id="aq" type="text" placeholder="${t('askph')}" value="${esc(a.q)}" autocomplete="off"><button class="btn primary" type="submit" ${a.busy?'disabled':''}>${t('askb')} ${ic('send')}</button></form>
+ ${a.busy?`<div class="card pad" style="display:flex;gap:10px;align-items:center"><span class="spin"></span><span class="muted">${t('thinking')}</span></div>`:a.res?`<div class="card answer"><b style="font-weight:600">${esc(a.res.q)}</b><p>${a.res.h}</p><div class="src"><span class="badge ${a.res.src==='school'?'b-acc':'b-mute'}">${a.res.src==='school'?t('s_school'):t('s_ai')}</span></div></div>`:
+ `<div class="card pad" style="display:grid;gap:6px"><span class="eic" style="width:34px;height:34px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center">${ic('spark')}</span><b style="font-weight:600">${t('wk')}</b><p class="muted" style="max-width:56ch">${t('wk_s')}</p></div>`}
+ <section class="sect"><span class="eyebrow" style="color:var(--muted)">${t('qs')}</span><div class="quick">${qs.map(q=>`<button data-act="quick" data-v="${esc(q)}"><span>${q}</span>${ic('arrow')}</button>`).join('')}</div></section>
+ <p class="note">${t('askfoot')}</p>`}
+
+function vRasm(){
+ const s=S.snap,uz=S.lang==='uz';
+ const res=s.img&&!s.busy?`<div class="card preview"><img src="${s.img}" alt=""><h3>${t('res_t')}</h3><ol class="steps">${(uz?['Topshiriqni diqqat bilan o‘qing va nima so‘ralganini bir gapda yozing.','Berilgan va noma’lum qiymatlarni ajratib yozing.','Mos formula yoki qoidani tanlang, masalan, Viyet teoremasi yoki a = Δv / t.','Qiymatlarni qo‘yib, bosqichma-bosqich hisoblang.','Javobni birligi bilan yozing va masala shartiga qaytib tekshiring.']:['Внимательно прочитайте задание и одной фразой запишите, что требуется.','Выпишите известные и неизвестные величины.','Выберите формулу или правило, например теорему Виета или a = Δv / t.','Подставьте значения и считайте по шагам.','Запишите ответ с единицами и проверьте по условию.']).map(x=>`<li>${x}</li>`).join('')}</ol><p class="note">${uz?'Demo: rasmdagi matn o‘qilmaydi. Haqiqiy versiyada qadamlar sizning masalangizga moslashadi.':'Демо: текст на фото не распознаётся. В полной версии шаги подстроятся под вашу задачу.'}</p><button class="btn" data-act="pick" style="justify-self:start">${ic('img')} ${t('another')}</button></div>`:
+ s.busy?`<div class="card pad" style="display:flex;gap:10px;align-items:center"><span class="spin"></span><span class="muted">${t('analyzing')}</span></div>`:empty('scan',t('noimg'),t('noimg_s'));
+ return`<div class="head"><h1 style="display:flex;gap:10px;align-items:center;color:var(--fg)"><span style="color:var(--accent)">${ic('scan','ico" style="width:24px;height:24px')}</span>${t('snap_t')}</h1><p class="muted">${t('snap_s')}</p></div>
+ <div class="drop" id="dz">${ic('img','ico" style="width:24px;height:24px;color:var(--accent)')}<b style="font-weight:500">${t('drop')}</b><span class="muted sm">${t('drop_s')}</span>
+ <div class="chips" style="justify-content:center"><button class="btn primary" data-act="pick">${ic('img')} ${t('upl')}</button><button class="btn" data-act="pickcam">${ic('cam')} ${t('camb')}</button></div>${s.err?`<p class="err">${t('too')}</p>`:''}</div>${res}
+ <input type="file" id="fi" accept="image/jpeg,image/png,image/webp" hidden><input type="file" id="fc" accept="image/*" capture="environment" hidden>`}
+
+/* planner */
+function buildPlan(){
+ const mult={easy:.75,bal:1,int:1.25}[S.plan.tempo],tasks=HW.filter(h=>!isDone(h)&&h.st!=='u').sort((a,b)=>({o:0,t:1,n:2}[a.st]-{o:0,t:1,n:2}[b.st]));
+ const now=new Date();let start=new Date(now);start.setMinutes(Math.ceil(now.getMinutes()/10)*10,0,0);
+ let cur=start.getHours()*60+start.getMinutes();const begin=cur,limit=cur+S.plan.min,out=[],left=[];
+ tasks.forEach(h=>{let m=Math.max(15,Math.round(h.est/mult/5)*5);
+  const room=limit-cur; if(room<15){left.push(h);return}
+  if(m>room)m=Math.floor(room/5)*5;
+  out.push({h,from:cur,m});cur+=m;if(S.plan.tempo!=='int'&&cur+15<=limit){out.push({brk:1,from:cur,m:5});cur+=5}});
+ if(out.length&&out[out.length-1].brk)out.pop();
+ return{out,left,begin}}
+const hm=m=>`${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
+function vReja(){
+ const p=S.plan,tasks=HW.filter(h=>!isDone(h)&&h.st!=='u'),late=tasks.filter(h=>h.st==='o').length;
+ const now=new Date(),st=new Date(now);st.setMinutes(Math.ceil(now.getMinutes()/10)*10,0,0);
+ const chip=(k,v,l,cur)=>`<button class="chip ${cur===v?'on':''}" data-act="${k}" data-v="${v}">${l}</button>`;
+ const r=p.res;
+ return head(`${ic('plan')} ${t('plan_e')}`,t('plan_t'),t('plan_s'))+
+ `<section class="sect"><span class="eyebrow" style="color:var(--muted)">${t('cond')}</span><div class="card form">
+  <div style="display:grid;gap:8px"><b style="font-weight:500">${t('avail')}</b><div class="chips">${[[30,'m30'],[60,'h1'],[120,'h2'],[180,'h3']].map(([v,k])=>chip('pmin',v,t(k),p.min)).join('')}</div></div>
+  <div style="display:grid;gap:8px"><b style="font-weight:500">${t('tempo')}</b><div class="chips">${[['easy','easy'],['bal','bal'],['int','int']].map(([v,k])=>chip('ptempo',v,t(k),p.tempo)).join('')}</div></div></div></section>
+ <section class="sect"><span class="eyebrow" style="color:var(--muted)">${t('inplan')}</span><div class="card pad" style="display:grid;gap:6px"><b style="font-weight:500">${tasks.length} ${t('real')}${late?` · <span style="color:var(--bad)">${t('late1')}</span>`:''}</b>
+  ${tasks.slice(0,5).map(h=>`<div class="muted sm"><span style="display:inline-block;min-width:78px">${sn(h.s)}</span> ${L(h)}</div>`).join('')}
+  <div class="note" style="border-top:1px solid var(--line);padding-top:8px;margin-top:4px">${t('start')}: ${hm(st.getHours()*60+st.getMinutes())}</div></div></section>
+ <button class="btn primary block" data-act="mkplan">${ic('spark')} ${t('mk')}</button>
+ ${r?`<section class="sect"><p class="muted">${t('plan_none')}</p><div class="card list plan">${r.out.map(b=>b.brk?`<div class="blk brk"><span class="st">${hm(b.from)}</span><span>${t('brk')} · ${b.m} ${t('minShort')}</span></div>`:`<div class="blk"><span class="st">${hm(b.from)}</span><span class="dot" style="background:${SUBJ[b.h.s].c}"></span><div style="flex:1;min-width:0"><div style="font-weight:500">${L(b.h)}</div><div class="muted sm">${sn(b.h.s)} · ${b.m} ${t('minShort')}</div></div>${stBadge(b.h)}</div>`).join('')}</div>
+  ${r.left.length?`<div class="hint">${ic('alert')} ${t('left')}: ${r.left.map(h=>sn(h.s)).join(', ')}</div>`:''}</section>`:empty('plan',t('plan_t'),t('plan_s'))}`}
+
+/* quiz */
+function vQuiz(){
+ const q=S.quiz,run=q.run,chip=(k,v,l,cur)=>`<button class="chip ${cur===v?'on':''}" data-act="${k}" data-v="${v}">${l}</button>`;
+ const setup=`<div class="card form">
+  <label for="qs">${t('subj')}<select id="qs">${QSUBJ.map(([k])=>`<option value="${k}" ${q.subj===k?'selected':''}>${sn(k)}</option>`).join('')}</select></label>
+  <label for="qt">${t('topic')}<input type="text" id="qt" placeholder="${t('topicph')}" value="${esc(q.topic)}"></label>
+  <div style="display:grid;gap:8px"><b style="font-weight:500">${t('qn')}</b><div class="chips">${[5].map(v=>chip('qn',v,v+t('qcount'),q.n)).join('')}</div></div>
+  <div style="display:grid;gap:8px"><b style="font-weight:500">${t('lvl')}</b><div class="chips">${[['easy','easy2'],['mid','mid'],['hard','hard']].map(([v,k])=>chip('qlvl',v,t(k),q.lvl)).join('')}</div></div></div>
+  <button class="btn primary block" data-act="qstart">${ic('spark')} ${t('go')}</button>
+  <section class="sect"><span class="eyebrow" style="color:var(--muted)">${t('prev')}</span><div class="card list">${q.hist.length?q.hist.map(h=>`<div class="row"><div class="grow"><div class="t">${sn(h.s)}</div><div class="meta">${h.topic||'—'}</div></div><b class="tnum">${h.sc}/${h.n}</b></div>`).join(''):`<div class="row muted">${t('noq')}</div>`}<div class="row note">${t('qnote')}</div></div></section>`;
+ let body;
+ if(!run)body=setup;
+ else{
+  const bank=QB[run.s],it=bank[run.i],pct=Math.round((run.i+(run.fin?1:0))/bank.length*100);
+  const prog=`<div class="card pad" style="display:grid;gap:10px"><div class="sect-h"><div><span class="muted" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase">${sn(run.s)}</span><div style="font-weight:500">${run.topic||sn(run.s)}</div></div><button class="btn" data-act="qreset">${t('newq')}</button></div><div class="bar"><i style="width:${pct}%"></i></div><div class="chips"><span class="badge b-acc">${ic('spark')} ${t('aiq')}</span><span class="badge b-mute">${t({easy:'easy2',mid:'mid',hard:'hard'}[q.lvl])}</span></div></div>`;
+  if(run.fin){
+   body=prog+`<div class="card pad" style="text-align:center;display:grid;gap:8px;justify-items:center"><span class="eyebrow">${t('result')}</span><div class="score tnum">${run.score}/${bank.length}</div><button class="btn primary" data-act="qagain">${t('again')}</button></div>`;
+  }else{
+   const ok=run.pick!=null&&run.pick===it[2];
+   body=prog+`<div style="display:grid;gap:12px"><span class="muted" style="font-size:11px;letter-spacing:.08em">${run.i+1} / ${bank.length}${t('qof')}</span><h2>${L(it[0])}</h2>
+   <div style="display:grid;gap:8px">${it[1].map((o,i)=>`<button class="opt ${run.pick!=null?(i===it[2]?'right':i===run.pick?'wrong':''):''}" data-act="qpick" data-v="${i}" ${run.pick!=null?'disabled':''}><span class="n">${i}</span>${L(o)}</button>`).join('')}</div>
+   ${run.pick==null?(run.hint?`<div class="hint">${ic('bulb')} ${L(it[4])}</div>`:`<button class="btn" data-act="qhint" style="justify-self:start">${ic('bulb')} ${t('hintb')}</button>`):
+   `<div class="card pad" style="background:${ok?'var(--ok-soft)':'var(--bad-soft)'};border-color:${ok?'var(--ok)':'var(--bad)'}"><b style="color:${ok?'var(--ok)':'var(--bad)'}">${ok?t('rightT'):t('wrongT')}</b>${ok?'':`<div style="color:var(--bad);font-size:13px">${t('rightA')}: ${L(it[1][it[2]])}</div>`}</div>
+   <div><span class="eyebrow" style="color:var(--muted)">${t('why')}</span><p style="margin-top:2px">${L(it[3])}</p></div>
+   <button class="btn primary" data-act="qnext" style="justify-self:start">${run.i+1<bank.length?t('nextq'):t('finish')} ${ic('arrow')}</button>`}
+   <p class="note">${t('qnote')}</p></div>`;
+  }}
+ return head(`${ic('quiz')} ${t('quiz_e')}`,t('quiz_t'),t('quiz_s'))+(run?'':`<span class="eyebrow" style="color:var(--muted)">${t('qcond')}</span>`)+body}
+
+/* tutor */
+const TU={
+ explain:(s,tp)=>({uz:`${tp||sn(s)} mavzusini 3 qadamda ko‘rib chiqamiz.<br><b>1. G‘oya.</b> Mavzuning asosiy qoidasini bitta gap bilan aytib olamiz.<br><b>2. Misol.</b> Oddiy sonlar yoki holat bilan ishlab ko‘ramiz.<br><b>3. Tekshiruv.</b> Natija mantiqqa to‘g‘ri kelishini solishtiramiz.<br>Tayyor bo‘lsangiz, «Mashq» rejimiga o‘tib, birgalikda yechamiz. Qaysi qismi tushunarsiz?`,ru:`Разберём тему «${tp||sn(s)}» в 3 шага.<br><b>1. Идея.</b> Формулируем главное правило одной фразой.<br><b>2. Пример.</b> Работаем на простых числах или ситуации.<br><b>3. Проверка.</b> Сверяем, что результат логичен.<br>Когда будете готовы, перейдём в режим «Тренируемся». Какая часть непонятна?`}),
+ practice:(s,tp)=>({uz:`Keling, birgalikda mashq qilamiz. Birinchi topshiriq: «${tp||sn(s)}» bo‘yicha o‘zingiz bilgan eng sodda misolni yozing. Men keyingi qadamni ko‘rsataman.`,ru:`Потренируемся вместе. Первое задание: напишите самый простой известный вам пример по теме «${tp||sn(s)}». Я подскажу следующий шаг.`}),
+ test:(s,tp)=>({uz:`Boshladik. Savol 1: «${tp||sn(s)}» mavzusining asosiy tushunchasini o‘z so‘zingiz bilan tushuntiring. Javobni darhol aytmayman, avval siz yozing.`,ru:`Начинаем. Вопрос 1: объясните своими словами основное понятие темы «${tp||sn(s)}». Ответ я сразу не скажу, сначала напишите вы.`})};
+function vRep(){
+ const u=S.tu,c=u.chat,sug=S.lang==='uz'?['Fotosintez','Hujayra tuzilishi','Qon aylanish tizimi']:['Фотосинтез','Строение клетки','Кровеносная система'];
+ return head(`${ic('cap')} ${t('tu_e')}`,t('tu_t'),t('tu_s'))+
+ `<div class="card form"><label for="ts">${t('subj')}<select id="ts">${Object.keys(SUBJ).map(k=>`<option value="${k}" ${u.subj===k?'selected':''}>${sn(k)}</option>`).join('')}</select></label>
+ <label for="tt">${t('topic')}<input type="text" id="tt" placeholder="${t('topicph')}" value="${esc(u.topic)}"><span class="muted sm" style="font-weight:400">${t('which')}</span></label>
+ <div class="chips">${sug.map(x=>`<button class="chip" data-act="tsug" data-v="${x}">${x}</button>`).join('')}</div>
+ <div style="display:grid;gap:8px"><b style="font-weight:500">${t('how')}</b>${[['explain','m1','m1s'],['practice','m2','m2s'],['test','m3','m3s']].map(([k,a,b])=>`<button class="mode ${u.mode===k?'on':''}" data-act="tmode" data-v="${k}"><b>${t(a)}</b><span>${t(b)}</span></button>`).join('')}</div></div>
+ <button class="btn primary block" data-act="tstart">${ic('spark')} ${t('tu_start')}</button>
+ ${c?`<div class="chat">${c.map(m=>`<div class="bubble ${m.me?'me':'ai'}">${m.me?esc(m.h):m.h}</div>`).join('')}</div>
+ <form id="tf" class="card ask-box"><input id="tq" type="text" placeholder="${t('reply')}" autocomplete="off"><button class="btn primary" type="submit">${ic('send')}</button></form>`:empty('cap',t('notstart'),t('notstart_s'))}`}
+
+function vOta(){
+ const open=HW.filter(h=>!isDone(h)),late=open.filter(h=>h.st==='o'),pct=Math.round(HW.filter(isDone).length/HW.length*100);
+ return head(`${ic('users')} ${t('family')}`,t('par_t'),t('par_s'))+
+ `<div class="card pad" style="display:flex;gap:12px;align-items:center"><span class="avatar" style="width:40px;height:40px;font-size:13px">AK</span><div><div class="muted sm">${t('child')}</div><b style="font-weight:600">${CHILD}</b><div class="muted sm">9-A · ${t('cls')}: ${T.yusupova}</div></div></div>
+ <div class="card stats"><div><small>${t('lessons')}</small><b>${(ttWeek()[curD]||[]).filter(Boolean).length}</b></div><div><small>${t('todo')}</small><b style="color:var(--warn)">${open.filter(h=>h.st==='o'||h.st==='t').length}</b></div><div><small>${t('tests')}</small><b>${HW.filter(h=>h.test).length+2}</b></div><div><small>${t('progress')}</small><b style="color:var(--accent)">${pct}%</b></div></div>
+ <section class="sect"><h2>${t('attn')}</h2><div class="card list">${late.length?late.map(h=>hwRow({...h},1).replace(/<button class="chk[^]*?<\/button>/,'')).join(''):`<div class="row muted">${t('nonotif')}</div>`}</div></section>
+ <section class="sect"><h2>${t('deadl')}</h2><div class="card list">${open.filter(h=>h.st!=='o').slice(0,5).map(h=>`<div class="row"><span class="dot" style="background:${SUBJ[h.s].c}"></span><div class="grow"><div class="t">${L(h)}</div><div class="meta">${sn(h.s)}</div></div><span class="muted sm">${L(h.due)}</span></div>`).join('')}</div></section>
+ <section class="sect"><h2>${t('todaySch')}</h2>${lessonsHtml(curD)}</section>`}
+
+const VIEWS={profil:vProfil,dev:vDev,bosh:vBosh,kunim:vKunim,jadval:vJadval,vazifa:vVazifa,sorash:vSorash,rasm:vRasm,reja:vReja,quiz:vQuiz,repetitor:vRep,'ota-onam':vOta};
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const vt=fn=>{if(document.startViewTransition&&!RM)document.startViewTransition(fn);else fn()};
+let curKey=null,navT=0;
+function countUp(root){
+ if(RM)return;
+ root.querySelectorAll('.stats b,.score').forEach(el=>{
+  const parts=el.textContent.split(/(\d+)/);if(parts.length<2)return;
+  const t0=performance.now()+250,D=1000;
+  const tick=now=>{const p=Math.max(0,Math.min(1,(now-t0)/D)),e=1-Math.pow(1-p,3);
+   el.textContent=parts.map(x=>/^\d+$/.test(x)?Math.round(+x*e):x).join('');
+   if(p<1)requestAnimationFrame(tick)};
+  requestAnimationFrame(tick)})
+}
+function render(){
+ const root=document.getElementById('root'),act=document.activeElement,aid=act&&act.id,sel=act&&act.selectionStart;
+ const oldBars=[...root.querySelectorAll('.bar i')].map(e=>e.style.width);
+ const enter=S.anim;S.anim=false;
+ document.documentElement.lang=S.lang;
+ let r='login';
+ if(!S.user){root.innerHTML=clsFix(viewLogin())}
+ else{
+  r=route();if(r==='dev'&&S.user.role!=='developer'){r='bosh';location.hash='bosh'}
+  if(S.user.role==='parent'&&!['ota-onam','jadval','vazifa','profil'].includes(r)){r='ota-onam';location.hash='ota-onam'}
+  root.innerHTML=clsFix(shell(r,VIEWS[r]()));
+  if(aid){const el=document.getElementById(aid);if(el){el.focus();try{el.setSelectionRange(sel,sel)}catch(e){}}}
+ }
+ curKey=r;root.className=enter?'enter':'';
+ if(enter)countUp(root);
+ else{const nb=root.querySelectorAll('.bar i');
+  if(nb.length===oldBars.length)nb.forEach((el,i)=>{const w=el.style.width;if(oldBars[i]&&oldBars[i]!==w){el.style.width=oldBars[i];void el.offsetWidth;el.style.width=w}})}
+ if(S.fx){root.querySelectorAll(S.fx).forEach((el,i)=>{el.classList.add('fx');el.style.animationDelay=Math.min(i,9)*50+'ms'});S.fx=null}
+ if(S.sc){const el=root.querySelector(S.sc);if(el)requestAnimationFrame(()=>el.scrollIntoView({behavior:RM?'auto':'smooth',block:'nearest'}));S.sc=null}
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+ if(S.acct&&!e.target.closest('.acct-pop')&&!e.target.closest('[data-act="acct"]')){S.acct=false;document.querySelector('.acct-pop')?.classList.remove('open');document.querySelector('[data-act="acct"]')?.setAttribute('aria-expanded','false')}
+ const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,v=b.dataset.v;
+ switch(a){
+  case'lang':vt(()=>{S.lang=v;try{localStorage.setItem('ps-lang',v)}catch(x){}render()});return;
+  case'theme':{const n=isDark()?'light':'dark';vt(()=>{document.documentElement.dataset.theme=n;try{localStorage.setItem('ps-theme',n)}catch(x){}render()});return}
+  case'drawer':S.drawer=!S.drawer;document.querySelector('.side')?.classList.toggle('open',S.drawer);document.querySelector('.scrim')?.classList.toggle('show',S.drawer);return;
+  case'nav':S.drawer=false;document.querySelector('.side')?.classList.remove('open');document.querySelector('.scrim')?.classList.remove('show');return;
+  case'acct':{S.acct=!S.acct;document.querySelector('.acct-pop')?.classList.toggle('open',S.acct);b.setAttribute('aria-expanded',S.acct);return}
+   case'logout':S.acct=false;S.user=null;S.drawer=false;S.anim=true;break;
+  case'demo':{const lg=document.getElementById('lg'),pw=document.getElementById('pw');lg.value=v;pw.value=ACC[v].pw;pw.focus();return}
+  case'tog':{const id=+v;S.done.has(id)?S.done.delete(id):S.done.add(id);S.fx=S.done.has(id)?`.chk[data-act="tog"][data-v="${id}"]`:null;break}
+  case'ptog':{const i=+v;S.pdone.has(i)?S.pdone.delete(i):S.pdone.add(i);S.fx=S.pdone.has(i)?`.chk[data-act="ptog"][data-v="${i}"]`:null;break}
+  case'day':S.day=+v;S.fx='.lesson';break;
+  case'filt':S.f=v;S.fx='.list>*';break;
+  case'quick':S.ask.q=v;runAsk(v);return;
+  case'pick':document.getElementById('fi').click();return;
+  case'pickcam':document.getElementById('fc').click();return;
+  case'pmin':S.plan.min=+v;S.plan.res=null;break;
+  case'ptempo':S.plan.tempo=v;S.plan.res=null;break;
+  case'mkplan':S.plan.res=buildPlan();S.fx='.plan>*';S.sc='.plan';break;
+  case'qn':S.quiz.n=+v;break;
+  case'qlvl':S.quiz.lvl=v;break;
+  case'qstart':{const q=S.quiz;q.run={s:q.subj,topic:q.topic.trim(),i:0,pick:null,score:0,hint:false,fin:false};S.fx='.page>*:not(.head)';break}
+  case'qreset':S.quiz.run=null;break;
+  case'qagain':{const r=S.quiz.run;S.quiz.run={s:r.s,topic:r.topic,i:0,pick:null,score:0,hint:false,fin:false};S.fx='.page>*:not(.head)';break}
+  case'qhint':S.quiz.run.hint=true;S.fx='.hint';break;
+  case'qpick':{const r=S.quiz.run,it=QB[r.s][r.i];r.pick=+v;if(r.pick===it[2])r.score++;S.fx='.opt.right,.opt.wrong,.card.pad[style*="-soft)"]';break}
+  case'qnext':{const r=S.quiz.run;if(r.i+1<QB[r.s].length){r.i++;r.pick=null;r.hint=false}else{r.fin=true;S.quiz.hist.unshift({s:r.s,topic:r.topic,sc:r.score,n:QB[r.s].length})}S.fx='.page>*:last-child';break}
+  case'tsug':S.tu.topic=v;break;
+  case'tmode':S.tu.mode=v;break;
+  case'tstart':{const u=S.tu;u.chat=[{h:L(TU[u.mode](u.subj,u.topic.trim()))}];S.fx='.chat .bubble';S.sc='.chat';break}
+ }
+ render();
+});
+document.addEventListener('input',e=>{
+ const i=e.target.id;
+ if(i==='aq')S.ask.q=e.target.value;
+ if(i==='qt')S.quiz.topic=e.target.value;
+ if(i==='tt')S.tu.topic=e.target.value;
+});
+document.addEventListener('change',e=>{
+ const i=e.target.id;
+ if(i==='qs'){S.quiz.subj=e.target.value}
+ else if(i==='ts'){S.tu.subj=e.target.value}
+ else if(i==='fi'||i==='fc'){handleFile(e.target.files[0]);return}
+ else return;
+ render();
+});
+document.addEventListener('submit',e=>{
+ e.preventDefault();const id=e.target.id;
+ if(id==='lf')login(document.getElementById('lg').value.trim().toLowerCase(),document.getElementById('pw').value);
+ if(id==='af'){const q=S.ask.q.trim();if(q)runAsk(q)}
+ if(id==='tf'){const inp=document.getElementById('tq'),v=inp.value.trim();if(!v)return;
+  const uz=S.lang==='uz';S.tu.chat.push({me:1,h:v});
+  S.tu.chat.push({h:uz?'Yaxshi fikr. Keling, uni bosqichma-bosqich tekshiramiz: avval asosiy qoidani eslang, so‘ng javobingizni unga qarab to‘g‘rilang. Demo versiyada javoblar tayyor shablon asosida beriladi.':'Хорошая мысль. Проверим по шагам: вспомните основное правило и сверьте с ним свой ответ. В демо-версии ответы даются по готовому шаблону.'});S.fx='.chat .bubble:nth-last-child(-n+2)';S.sc='.chat .bubble:last-child';render();
+  const n=document.getElementById('tq');if(n)n.focus()}
+});
+document.addEventListener('dragover',e=>{const z=e.target.closest('#dz');if(z){e.preventDefault();z.classList.add('over')}});
+document.addEventListener('dragleave',e=>{const z=e.target.closest&&e.target.closest('#dz');if(z&&!z.contains(e.relatedTarget))z.classList.remove('over')});
+document.addEventListener('drop',e=>{if(e.target.closest('#dz')){e.preventDefault();handleFile(e.dataTransfer.files[0])}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.acct){S.acct=false;document.querySelector('.acct-pop')?.classList.remove('open')}});
+window.addEventListener('hashchange',()=>{S.acct=false;document.querySelector('.acct-pop')?.classList.remove('open');
+ const wasOpen=!!document.querySelector('.side.open');S.drawer=false;
+ document.querySelector('.side')?.classList.remove('open');document.querySelector('.scrim')?.classList.remove('show');
+ if(!S.user||route()===curKey)return;
+ const pg=document.querySelector('.page');if(pg&&!RM)pg.classList.add('leaving');
+ clearTimeout(navT);
+ navT=setTimeout(()=>{S.anim=true;render();scrollTo({top:0,behavior:'instant'})},RM?0:(wasOpen?200:140));
+});
+
+function login(l,p){const a=ACC[l];if(a&&a.pw===p){S.user=a;S.loginErr=false;location.hash=a.role==='parent'?'ota-onam':'bosh';S.anim=true;render()}else{S.loginErr=true;S.fx='.err,.login-card input';render()}}
+function runAsk(q){const a=S.ask;a.q=q;a.busy=true;a.res=null;render();setTimeout(()=>{a.res={q,...answerFor(q)};a.busy=false;a.q='';S.fx='.answer';render()},650)}
+function handleFile(f){
+ const s=S.snap;s.err=false;if(!f)return;
+ if(!/^image\/(jpeg|png|webp)$/.test(f.type)||f.size>8*1024*1024){s.err=true;render();return}
+ s.busy=true;s.img=null;render();
+ const r=new FileReader();r.onload=()=>{setTimeout(()=>{s.img=r.result;s.busy=false;S.fx='.preview';S.sc='.preview';render()},900)};r.readAsDataURL(f);
+}
+render();
+
+/* ---------- profile & developer panel ---------- */
+function vProfil(){const u=S.user;
+ return head('',L2('Profil','Профиль'),L2('Ism, familiya, sinf va rasmingizni o‘zgartiring.','Имя, фамилия, класс и фото.'))+
+ `<div class="card pad" style="display:grid;gap:14px">
+  <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="avatar big" style="width:72px;height:72px;font-size:20px;overflow:hidden">${avh(u)}</span>
+   <div style="display:grid;gap:8px"><label class="btn" style="cursor:pointer">${ic('img')} ${L2('Rasm yuklash','Загрузить фото')}<input type="file" id="pphoto" accept="image/*" hidden></label>
+   ${u.photo?`<button class="btn" data-act="pfnophoto">${ic('x')} ${L2('Rasmni olib tashlash','Удалить фото')}</button>`:''}</div></div>
+  <label>${L2('Ism','Имя')}<input id="pname" type="text" value="${esc(u.name||'')}"></label>
+  <label>${L2('Familiya','Фамилия')}<input id="psur" type="text" value="${esc(u.surname||'')}"></label>
+  <label>${L2('Sinf','Класс')}<input id="pcls" type="text" value="${esc(u.cls||'')}" placeholder="9-A"></label>
+  <label>${L2('Yangi parol (bo‘sh qoldirsangiz o‘zgarmaydi)','Новый пароль (необязательно)')}<input id="ppw" type="password" autocomplete="new-password"></label>
+  <button class="btn primary block" data-act="pfsave">${ic('check')} ${L2('Saqlash','Сохранить')}</button></div>`}
+
+const ROLE_OPTS=(cur)=>['student','parent','developer'].map(r=>`<option value="${r}" ${cur===r?'selected':''}>${r}</option>`).join('');
+function vDev(){
+ if(S.user.role!=='developer')return empty('flag',L2('Ruxsat yo‘q','Нет доступа'),'');
+ const keys=Object.keys(ACC),k0=keys[0],a0=ACC[k0]||{};
+ const rows=keys.map(k=>{const a=ACC[k];return `<div class="row"><span class="avatar" style="width:28px;height:28px;font-size:10px">${esc(a.ini||'')}</span><div class="grow"><div class="t">${esc(fullName(a))}</div><div class="meta"><span>${esc(k)}</span><span>${esc(a.role)}</span>${a.cls?`<span>${esc(a.cls)}</span>`:''}</div></div></div>`}).join('');
+ const news=NEWS.map((n,i)=>`<div class="row"><div class="grow"><div class="t">${esc(n.uz[0])}</div><div class="meta"><span>${esc(n.uz[2]||'')}</span></div></div><button class="btn" data-act="dnews_del" data-v="${i}" aria-label="delete">${ic('x')}</button></div>`).join('');
+ return head('',L2('Developer paneli','Панель разработчика'),L2('Saytdagi hisoblar va yangiliklarni to‘liq boshqaring.','Полное управление аккаунтами и новостями сайта.'))+
+ `<section class="sect"><h2>${L2('Hisoblar','Аккаунты')}</h2><div class="card list">${rows}</div></section>
+  <section class="sect"><h2>${L2('Hisobni tahrirlash','Редактирование аккаунта')}</h2><div class="card form">
+   <label>${L2('Hisob','Аккаунт')}<select id="dk">${keys.map(k=>`<option value="${k}">${esc(k)} — ${esc(fullName(ACC[k]))}</option>`).join('')}</select></label>
+   <label>${L2('Ism','Имя')}<input id="dname" type="text" value="${esc(a0.name||'')}"></label>
+   <label>${L2('Familiya','Фамилия')}<input id="dsur" type="text" value="${esc(a0.surname||'')}"></label>
+   <label>${L2('Sinf','Класс')}<input id="dcls" type="text" value="${esc(a0.cls||'')}"></label>
+   <label>${L2('Rol','Роль')}<select id="drole">${ROLE_OPTS(a0.role)}</select></label>
+   <label>${L2('Yangi parol (bo‘sh qoldirsangiz o‘zgarmaydi)','Новый пароль')}<input id="dpw" type="text" autocomplete="off"></label>
+   <div class="chips"><button class="btn primary" data-act="dsave">${ic('check')} ${L2('Saqlash','Сохранить')}</button><button class="btn" data-act="ddel">${ic('x')} ${L2('O‘chirish','Удалить')}</button></div></div></section>
+  <section class="sect"><h2>${L2('Yangi hisob','Новый аккаунт')}</h2><div class="card form">
+   <label>${L2('Login','Логин')}<input id="nlg" type="text" autocapitalize="none" autocorrect="off"></label>
+   <label>${L2('Parol','Пароль')}<input id="npw" type="text" autocomplete="off"></label>
+   <label>${L2('Ism','Имя')}<input id="nname" type="text"></label>
+   <label>${L2('Familiya','Фамилия')}<input id="nsur" type="text"></label>
+   <label>${L2('Sinf','Класс')}<input id="ncls" type="text"></label>
+   <label>${L2('Rol','Роль')}<select id="nrole">${ROLE_OPTS('student')}</select></label>
+   <button class="btn primary block" data-act="dnew">${ic('check')} ${L2('Hisob yaratish','Создать аккаунт')}</button></div></section>
+  <section class="sect"><h2>${L2('Yangiliklar','Новости')}</h2><div class="card list">${news||`<div class="row muted">—</div>`}</div>
+   <div class="card form" style="margin-top:10px">
+   <label>${L2('Sarlavha','Заголовок')}<input id="dntitle" type="text"></label>
+   <label>${L2('Matn','Текст')}<textarea id="dntext" rows="3"></textarea></label>
+   <label>${L2('Sana / izoh','Дата / пометка')}<input id="dnmeta" type="text"></label>
+   <button class="btn primary block" data-act="dnews_add">${ic('check')} ${L2('Yangilik qo‘shish','Добавить новость')}</button></div></section>
+  <section class="sect"><h2>${L2('Sayt tahriri','Редактирование сайта')}</h2><div class="card form">
+   <label>${L2('Sinf nomi','Название класса')}<input id="scls" type="text" value="${esc(SITE.cls)}"></label>
+   <label>${L2('Barcha ma’lumotlar (JSON): o‘qituvchilar, xonalar, jadval, vazifalar, yangiliklar','Все данные сайта (JSON)')}<textarea id="sjson" rows="14" style="font-family:monospace;font-size:12px">${esc(JSON.stringify(siteObj(),null,2))}</textarea></label>
+   <div class="chips"><button class="btn primary" data-act="dsite_save">${ic('check')} ${L2('Saqlash va yangilash','Сохранить и обновить')}</button></div>
+   <p class="note">${L2('Ehtiyot bo‘ling: JSON noto‘g‘ri bo‘lsa, saqlanmaydi.','Внимание: при неверном JSON ничего не сохранится.')}</p></div></section>
+  <section class="sect"><h2>${L2('Xavfli amallar','Опасная зона')}</h2><div class="card pad"><button class="btn" data-act="dreset">${ic('x')} ${L2('Barcha o‘zgarishlarni tiklash','Сбросить все изменения')}</button></div></section>`}
+
+document.addEventListener('change',e=>{
+ if(e.target.id==='pphoto'){const f=e.target.files[0];if(!f)return;const url=URL.createObjectURL(f);const img=new Image();
+  img.onload=()=>{const sz=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=256;
+   c.getContext('2d').drawImage(img,(img.width-sz)/2,(img.height-sz)/2,sz,sz,0,0,256,256);
+   const k=userKey();if(k){ACC[k].photo=c.toDataURL('image/jpeg',0.85);S.user=ACC[k];saveAcc()}
+   URL.revokeObjectURL(url);render()};img.src=url;return}
+ if(e.target.id==='dk'){const a=ACC[e.target.value]||{};
+  document.getElementById('dname').value=a.name||'';document.getElementById('dsur').value=a.surname||'';
+  document.getElementById('dcls').value=a.cls||'';document.getElementById('drole').value=a.role||'student';document.getElementById('dpw').value=''}
+});
+
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
+ const mine=['pfsave','pfnophoto','dsave','ddel','dnew','dnews_add','dnews_del','dreset','dsite_save','ttedit','ttsave','ttreset'];
+ if(!mine.includes(a))return;
+ e.stopPropagation();e.preventDefault();
+ const g=id=>{const el=document.getElementById(id);return el?el.value.trim():''};
+ const isDev=S.user&&S.user.role==='developer';
+ if(a.startsWith('d')&&!isDev){alert('Faqat developer uchun.');return}
+ if(a==='pfsave'){const k=userKey();if(!k)return;const x=ACC[k];const nm=g('pname');
+  if(!nm){alert('Ism bo‘sh bo‘lmasligi kerak.');return}
+  x.name=nm;x.surname=g('psur');x.cls=g('pcls');const pw=g('ppw');if(pw)x.pw=pw;x.ini=initOf(x);
+  saveAcc();S.user=x;render();return}
+ if(a==='pfnophoto'){const k=userKey();if(k){delete ACC[k].photo;saveAcc();S.user=ACC[k]}render();return}
+ if(a==='dsave'){const k=g('dk');const x=ACC[k];if(!x)return;
+  x.name=g('dname')||x.name;x.surname=g('dsur');x.cls=g('dcls');const r=g('drole')||x.role;
+  if(k==='developer'&&r!=='developer'){alert('Developer hisobining roli o‘zgarmaydi.')}else{x.role=r}
+  const pw=g('dpw');if(pw)x.pw=pw;x.ini=initOf(x);saveAcc();if(S.user===x)S.user=x;render();return}
+ if(a==='ddel'){const k=g('dk');if(k==='developer'){alert('Developer hisobini o‘chirib bo‘lmaydi.');return}
+  if(!ACC[k])return;if(!confirm(k+' hisobini o‘chirasizmi?'))return;delete ACC[k];saveAcc();render();return}
+ if(a==='dnew'){const k=g('nlg').toLowerCase();const pw=g('npw');
+  if(!k||!pw){alert('Login va parol kiritilishi shart.');return}
+  if(ACC[k]){alert('Bunday login mavjud.');return}
+  ACC[k]={pw,role:g('nrole')||'student',name:g('nname')||k,surname:g('nsur'),cls:g('ncls'),photo:''};ACC[k].ini=initOf(ACC[k]);
+  saveAcc();render();return}
+ if(a==='dnews_add'){const title=g('dntitle');if(!title){alert('Sarlavha kiritilishi shart.');return}
+  const text=g('dntext'),meta=g('dnmeta')||'Yangilik';
+  NEWS.unshift({i:'cal',uz:[title,text,meta],ru:[title,text,meta]});saveNews();render();return}
+ if(a==='dnews_del'){NEWS.splice(+b.dataset.v,1);saveNews();render();return}
+ if(a==='ttedit'){ttEdit=!ttEdit;render();return}
+ if(a==='ttsave'){const d=S.day;const base=JSON.parse(JSON.stringify(ttWeek()));
+  base[d]=SLOT.map((_,i)=>{const el=document.getElementById('tt-'+i);return el&&el.value?el.value:null});
+  try{localStorage.setItem('ps-tt-'+userKey(),JSON.stringify(base))}catch(err){alert('Saqlashda xatolik')}
+  ttEdit=false;render();return}
+ if(a==='ttreset'){try{localStorage.removeItem('ps-tt-'+userKey())}catch(err){}ttEdit=false;render();return}
+ if(a==='dsite_save'){let o;try{o=JSON.parse(document.getElementById('sjson').value)}catch(err){alert('JSON xato: '+err.message);return}
+  const need=['T','ROOMS','TEACH','SLOT','WEEK','HW','NEWS'];
+  if(!o||typeof o!=='object'||need.some(k=>o[k]===undefined)){alert('Majburiy bo‘limlar yetishmayapti: '+need.join(', '));return}
+  o.cls=g('scls')||o.cls||'8-A';
+  try{localStorage.setItem('ps-site',JSON.stringify(o));localStorage.setItem('ps-news',JSON.stringify(o.NEWS))}catch(err){alert('Saqlashda xatolik');return}
+  location.reload();return}
+ if(a==='dreset'){if(!confirm('Barcha hisob va yangilik o‘zgarishlari o‘chadi. Davom etasizmi?'))return;
+  try{localStorage.removeItem('ps-accounts');localStorage.removeItem('ps-news');localStorage.removeItem('ps-site')}catch(x){}location.reload();return}
+},true);
+</script>
+</body>
+</html>
